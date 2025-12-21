@@ -4,18 +4,27 @@ using System.Linq;
 using OpenTK.Graphics.OpenGL4;
 
 namespace BladeVibrationCS; 
-public class ModelHolder {
-	const float YM_Air = 1e3f;
-	const float YM_Wood = 9.5e9f;
-	const float YM_Bronze = 112e9f;
-	const float YM_Steel = 200e9f;
+public class ModelHolder : IDisposable {
+	public const float YM_Air = 1e3f;
+	public const float YM_Wood = 9.5e9f;
+	public const float YM_Bronze = 112e9f;
+	public const float YM_Steel = 200e9f;
+
+	List<string> Errors = [];
 
 	List<Vertex> Vertices = [];
+	List<int> Indices = [];
 	float[] Data = null;
+	int[] DataIndices = null;
 
 	public int VBO { get; private set; }
 	public int VAO { get; private set; }
+	public int EBO { get; private set; }
 	public int VertexCount => Vertices.Count;
+	public int FaceCount => Indices.Count / 3;
+	public int IndexCount => Indices.Count;
+
+	public bool IsOnGPU => VBO != 0 && VAO != 0;
 
 	public ModelHolder (string modelPath, Dictionary<string, float> YoungModuli) {
 		if ( string.IsNullOrEmpty ( modelPath ) )
@@ -30,6 +39,7 @@ public class ModelHolder {
 			int vN = mesh.VertexCount;
 			Vertices.Capacity += vN;
 			float YM = YoungModuli.GetValueOrDefault ( mesh.Name, YM_Air );
+			int vertexOffset = Vertices.Count;
 
 			for ( int i = 0; i < vN; i++ ) {
 				Vertices.Add ( new Vertex {
@@ -44,21 +54,76 @@ public class ModelHolder {
 					E = YM
 				} );
 			}
+
+			int tN = mesh.FaceCount;
+			Indices.Capacity += tN * 3;
+			for ( int i = 0; i < tN; i++ ) {
+				var face = mesh.Faces[i];
+				if ( face.IndexCount != 3 ) {
+					Errors.Add ( $"Non-triangular face detected in mesh '{mesh.Name}'." );
+					continue;
+				}
+				Indices.Add ( face.Indices[0] + vertexOffset );
+				Indices.Add ( face.Indices[1] + vertexOffset );
+				Indices.Add ( face.Indices[2] + vertexOffset );
+			}
 		}
 
 		Data = [.. Vertices.SelectMany ( v => new[] { v.X, v.Y, v.Z, v.R, v.S, v.T, v.U, v.V, v.E } )];
+		DataIndices = Indices.ToArray ();
 	}
 
 	public void PushToGPU () {
-		VBO = GL.GenBuffer ();
-		GL.BindBuffer ( BufferTarget.ArrayBuffer, VBO );
-		GL.BufferData ( BufferTarget.ArrayBuffer, Data.Length * sizeof ( float ), Data, BufferUsageHint.StaticDraw );
+		if ( IsOnGPU ) throw new InvalidOperationException ( "Model is already pushed to GPU." );
+		(VBO, VAO, EBO) = PushModelToGPU ( Data, DataIndices, 9 );
+	}
 
-		VAO = GL.GenVertexArray ();
-		GL.BindVertexArray ( VAO );
-		int stride = 9 * sizeof ( float );
-		GL.VertexAttribPointer ( 0, 3, VertexAttribPointerType.Float, false, stride, 0 );
+	public static (int vbo, int vao, int ebo) PushModelToGPU ( float[] vertices, int[] indices, int stride = 3 ) {
+		int vao = GL.GenVertexArray ();
+		int vbo = GL.GenBuffer ();
+		int ebo = GL.GenBuffer ();
+
+		GL.BindVertexArray ( vao ); // Binding VAO must come first because it stores the state of VBO and EBO bindings
+		//int stride = 9 * sizeof ( float );
+		//GL.VertexAttribPointer ( 0, 3, VertexAttribPointerType.Float, false, stride, 0 );
+		//GL.EnableVertexAttribArray ( 0 );
+
+		GL.BindBuffer ( BufferTarget.ArrayBuffer, vbo );
+		GL.BufferData ( BufferTarget.ArrayBuffer, vertices.Length * sizeof ( float ), vertices, BufferUsageHint.StaticDraw );
+
+		GL.BindBuffer ( BufferTarget.ElementArrayBuffer, ebo );
+		GL.BufferData ( BufferTarget.ElementArrayBuffer, indices.Length * sizeof ( int ), indices, BufferUsageHint.StaticDraw );
+
 		GL.EnableVertexAttribArray ( 0 );
+		GL.VertexAttribPointer ( 0, 3, VertexAttribPointerType.Float, false, stride * sizeof ( float ), 0 ); // Position
+
+		GL.BindVertexArray ( 0 );
+		GL.BindBuffer ( BufferTarget.ArrayBuffer, 0 );
+
+		return ( vbo, vao, ebo );
+	}
+
+	public float MinX => Vertices.Min ( v => v.X );
+	public float MaxX => Vertices.Max ( v => v.X );
+	public float MinY => Vertices.Min ( v => v.Y );
+	public float MaxY => Vertices.Max ( v => v.Y );
+	public float MinZ => Vertices.Min ( v => v.Z );
+	public float MaxZ => Vertices.Max ( v => v.Z );
+
+	private bool isDisposed = false;
+	protected virtual void Dispose ( bool disposing ) {
+		if ( !isDisposed ) {
+			GL.DeleteBuffer ( VBO );
+			GL.DeleteVertexArray ( VAO );
+			isDisposed = true;
+		}
+	}
+	public void Dispose () {
+		Dispose ( true );
+		GC.SuppressFinalize ( this );
+	}
+	~ModelHolder () {
+		if ( !isDisposed ) throw new Exception ( "ModelHolder was not disposed properly before being finalized." );
 	}
 }
 

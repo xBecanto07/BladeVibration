@@ -1,64 +1,82 @@
 ﻿using System;
 using System.Collections.Generic;
-using OpenTK.Graphics.OpenGL;
+using OpenTK.Graphics.OpenGL4;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Desktop;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 using OpenTK.Mathematics;
+using BladeVibrationCS.GpuPrograms;
 
 namespace BladeVibrationCS; 
 public class WindowsHolder : GameWindow {
-	const float BACKGROUND_MULTIPLIER = 0.5f;
-	const float BACKGROUND_R = (123 / 255f) * BACKGROUND_MULTIPLIER;
-	const float BACKGROUND_G = (27 / 255f) * BACKGROUND_MULTIPLIER;
-	const float BACKGROUND_B = (56 / 255f) * BACKGROUND_MULTIPLIER;
-	ModelHolder Model;
-	ShaderProgram ProgramGPU;
-	Vector3 ModelOffset;
+	AShaderProgram Program = null;
+	ModelHolder Model = null;
+	VoxelObject VoxelObject = null;
+	Vector3 ModelOffset = Vector3.Zero;
+	Vector3 CameraPosition = new ( 0.14f, 1.5f, 1.3f );
+	/// <summary>X - Left/Right | Y - Up/Down</summary>
+	Vector2 CameraRotation = new ( -0.45f, -0.8f );
+	Vector3 VoxelSlicePosition = Vector3.Zero;
+	Quaternion VoxelSliceRotation = Quaternion.Identity;
+	Matrix4 viewMatrix = Matrix4.Identity;
+	Matrix4 projectionMatrix = Matrix4.Identity;
+	int VoxelDisplayLayer = 0;
+	//RenderModeRequest.RenderMode CurrentRenderMode = RenderModeRequest.RenderMode.Solid;
 	float scale = 1f;
+	readonly Controler controler;
+	readonly RenderController renderController;
 
 	public const string TITLE = "Blade Vibration C#";
-	public WindowsHolder ( int width, int height ) : base ( GameWindowSettings.Default, new NativeWindowSettings () { ClientSize = (width, height), Title = TITLE } ) {
-		Model = new ModelHolder ( "C:\\Maldus\\School\\Ing3Z\\PGR\\Testing\\2HSword0.FBX", new Dictionary<string, float> {
-			{ "Blade_Wood", 9.5e9f },
-			{ "Blade_Bronze", 112e9f },
-			{ "Blade_Steel", 200e9f },
-		} );
-		ProgramGPU = new ShaderProgram ( ( "Vertex.glsl", ShaderType.VertexShader ), ( "Fragment.glsl", ShaderType.FragmentShader ) );
+	public WindowsHolder ( Controler control, int width, int height ) : base ( GameWindowSettings.Default, new NativeWindowSettings () { ClientSize = (width, height), Title = TITLE } ) {
+		controler = control;
+		renderController = new ( controler, new Vector2i ( width, height ) );
 	}
 
 	protected override void OnLoad () {
 		base.OnLoad ();
+		projectionMatrix = Matrix4.CreatePerspectiveFieldOfView ( MathHelper.DegreesToRadians ( 60f ), (float)Size.X / Size.Y, 0.01f, 1000f );
 
-		GL.ClearColor ( BACKGROUND_R, BACKGROUND_G, BACKGROUND_B, 1.0f );
 		//GL.Enable ( EnableCap.DepthTest );
 
-		Model.PushToGPU ();
-		ProgramGPU.Use ();
+		//Model.PushToGPU ();
+		Program?.Use ();
+		GL.ClearColor ( 0.5f, 0.5f, 0.5f, 1.0f ); // Default, no program used, gray background
 	}
 
 	public override void Close () {
 		base.Close ();
-		ProgramGPU.Dispose ();
+		Program?.Dispose ();
+		Program = null;
+		Model?.Dispose ();
+		Model = null;
 	}
 
 	protected override void OnRenderFrame ( FrameEventArgs args ) {
 		base.OnRenderFrame ( args );
 		// Clear the screen
-		GL.Clear ( ClearBufferMask.ColorBufferBit );
+		GL.Clear ( ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit );
 
 		// Render the model
-		ProgramGPU.Use ();
-		ProgramGPU.SetUniform ( "colorA", 1f, 0f, 0f );
-		ProgramGPU.SetUniform ( "colorB", 0f, 0f, 1f );
-		ProgramGPU.SetUniform ( "offset", ModelOffset.X, ModelOffset.Y, ModelOffset.Z );
-		ProgramGPU.SetUniform ( "scale", scale );
-		ProgramGPU.SetUniform ( "time", (float)(DateTime.Now.TimeOfDay.TotalMilliseconds / 1000) );
-
-		GL.BindVertexArray ( Model.VAO );
-		GL.DrawArrays ( PrimitiveType.Triangles, 0, Model.VertexCount );
+		AShaderProgram program;
+		while ( (program = renderController.NextDrawRequest) != null ) {
+			switch ( program ) {
+			case BasicMeshRenderer basicMeshRenderer:
+				basicMeshRenderer.Render ( ModelOffset, scale, viewMatrix, projectionMatrix );
+				break;
+			case VoxelVisualizer voxelVisualizer:
+				voxelVisualizer.Render ( VoxelSlicePosition, VoxelSliceRotation, viewMatrix, projectionMatrix );
+				break;
+			case VoxelObject voxelObject:
+				voxelObject.Voxelize ();
+				// As voxelObject draws into texture, let's clear with yellow to indicate voxelization step
+				GL.ClearColor ( 0.5f, 0.5f, 0f, 1.0f );
+				GL.Clear ( ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit );
+				break;
+			}
+		}
 
 		SwapBuffers ();
+		renderController.FinishDrawCycle ();
 
 		System.Threading.Thread.Sleep ( 1000 / 60 );
 	}
@@ -66,8 +84,12 @@ public class WindowsHolder : GameWindow {
 
 	protected override void OnUpdateFrame ( FrameEventArgs args ) {
 		base.OnUpdateFrame ( args );
+
+		renderController.Process ();
+
 		var input = KeyboardState;
-		if ( input.IsKeyDown ( Keys.Escape ) )
+		var mouse = MouseState;
+		if ( input.IsKeyDown ( Keys.Escape ) || controler.StopRequested )
 			Close ();
 
 		float speed = 0.1f;
@@ -76,13 +98,36 @@ public class WindowsHolder : GameWindow {
 		if ( input.IsKeyDown ( Keys.LeftControl ) ) speed = 0.02f;
 		if ( input.IsKeyDown ( Keys.RightControl ) ) speed = 0.01f;
 
-		if ( input.IsKeyDown ( Keys.A ) ) ModelOffset.X -= speed * (float)args.Time;
-		if ( input.IsKeyDown ( Keys.D ) ) ModelOffset.X += speed * (float)args.Time;
-		if ( input.IsKeyDown ( Keys.W ) ) ModelOffset.Y += speed * (float)args.Time;
-		if ( input.IsKeyDown ( Keys.S ) ) ModelOffset.Y -= speed * (float)args.Time;
-		//if ( input.IsKeyDown ( Keys.Q ) ) ModelOffset.Z += speed * (float)args.Time;
-		//if ( input.IsKeyDown ( Keys.E ) ) ModelOffset.Z -= speed * (float)args.Time;
+		ModelOffset.Move (input, Matrix4.Identity, (float)(speed * args.Time), Keys.Left, Keys.Right, Keys.Up, Keys.Down, Keys.Unknown, Keys.Unknown);
 		if ( input.IsKeyDown ( Keys.Space ) ) ModelOffset = Vector3.Zero;
+
+		if ( mouse.IsButtonDown ( MouseButton.Left ) ) {
+			CameraRotation.Y -= mouse.Delta.Y * 0.01f;
+			CameraRotation.X -= mouse.Delta.X * 0.01f;
+			CameraRotation.Y = MathHelper.Clamp ( CameraRotation.Y, -MathHelper.PiOver2 + 0.01f, MathHelper.PiOver2 - 0.01f );
+		}
+		Matrix4 yawLeftRightRotation = Matrix4.CreateRotationY ( CameraRotation.X );
+		Matrix4 pitchUpDownRotation = Matrix4.CreateRotationX ( CameraRotation.Y );
+		Matrix4 cameraSpace = pitchUpDownRotation * yawLeftRightRotation;
+		//CameraPosition.Move (input, cameraSpace, (float)(speed * args.Time), Keys.W, Keys.S, Keys.A, Keys.D, Keys.Q, Keys.E);
+		if (mouse.IsButtonDown(MouseButton.Right)) {
+			CameraPosition += Vector3.TransformVector ( Vector3.UnitX, cameraSpace ) * mouse.Delta.X * 0.01f;
+			CameraPosition -= Vector3.TransformVector ( Vector3.UnitY, cameraSpace ) * mouse.Delta.Y * 0.01f;
+		}
+		Vector3 forward = Vector3.TransformVector ( Vector3.UnitZ, cameraSpace );
+		CameraPosition -= forward * mouse.ScrollDelta.Y * 0.1f;
+		if ( input.IsKeyDown ( Keys.Tab ) ) {
+			CameraPosition = Vector3.UnitX;
+			CameraRotation = Vector2.Zero;
+		}
+		viewMatrix = Matrix4.LookAt (CameraPosition, CameraPosition - forward, Vector3.UnitY);
+
+		VoxelSlicePosition.Move (input, Matrix4.Identity, (float)(speed * args.Time), Keys.I, Keys.K, Keys.J, Keys.L, Keys.U, Keys.O);
+
+		Vector3 sliceRot = Vector3.Zero;
+		sliceRot.Move (input, Matrix4.Identity, (float)(speed * args.Time), Keys.T, Keys.G, Keys.F, Keys.H, Keys.R, Keys.Y);
+		Quaternion deltaRot = Quaternion.FromEulerAngles ( sliceRot.X, sliceRot.Y, sliceRot.Z );
+		VoxelSliceRotation = deltaRot * VoxelSliceRotation;
 
 		if ( input.IsKeyDown ( Keys.Z ) ) scale *= 1.0f + speed * (float)args.Time;
 		if ( input.IsKeyDown ( Keys.X ) ) scale *= 1.0f - speed * (float)args.Time;

@@ -6,25 +6,27 @@ using OpenTK.Windowing.Desktop;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 using OpenTK.Mathematics;
 using BladeVibrationCS.GpuPrograms;
+using BladeVibrationCS.Primitives;
 
 namespace BladeVibrationCS; 
 public class WindowsHolder : GameWindow {
 	AShaderProgram Program = null;
 	ModelHolder Model = null;
 	VoxelObject VoxelObject = null;
-	Vector3 ModelOffset = Vector3.Zero;
-	Vector3 CameraPosition = new ( 0.14f, 1.5f, 1.3f );
+	public Vector3 ModelOffset = Vector3.Zero;
+	//public Vector3 CameraPosition = new ( 0.14f, 1.5f, 1.3f );
 	/// <summary>X - Left/Right | Y - Up/Down</summary>
-	Vector2 CameraRotation = new ( -0.45f, -0.8f );
+	//public Vector2 CameraRotation = new ( -0.45f, -0.8f );
 	Vector3 VoxelSlicePosition = Vector3.Zero;
 	Quaternion VoxelSliceRotation = Quaternion.Identity;
-	Matrix4 viewMatrix = Matrix4.Identity;
+	//Matrix4 viewMatrix = Matrix4.Identity;
 	Matrix4 projectionMatrix = Matrix4.Identity;
 	int VoxelDisplayLayer = 0;
 	//RenderModeRequest.RenderMode CurrentRenderMode = RenderModeRequest.RenderMode.Solid;
-	float scale = 1f;
-	readonly Controler controler;
-	readonly RenderController renderController;
+	public float scale = 0.03f;
+	public readonly Controler controler;
+	public readonly RenderController renderController;
+	public readonly Camera Camera = new ( new ( -0.5f, 0.6f, -0.6f ), new ( 0.9f, 0.5f ) );
 
 	public const string TITLE = "Blade Vibration C#";
 	public WindowsHolder ( Controler control, int width, int height ) : base ( GameWindowSettings.Default, new NativeWindowSettings () { ClientSize = (width, height), Title = TITLE } ) {
@@ -61,16 +63,16 @@ public class WindowsHolder : GameWindow {
 		while ( (program = renderController.NextDrawRequest) != null ) {
 			switch ( program ) {
 			case BasicMeshRenderer basicMeshRenderer:
-				basicMeshRenderer.Render ( ModelOffset, scale, viewMatrix, projectionMatrix );
+				basicMeshRenderer.Render ( ModelOffset, scale, Camera.View, projectionMatrix, Camera.Position );
 				break;
 			case VoxelVisualizer voxelVisualizer:
-				voxelVisualizer.Render ( VoxelSlicePosition, VoxelSliceRotation, viewMatrix, projectionMatrix );
+				voxelVisualizer.Render ( VoxelSlicePosition, VoxelSliceRotation, Camera.View, projectionMatrix );
 				break;
 			case VoxelObject voxelObject:
 				voxelObject.Voxelize ();
 				// As voxelObject draws into texture, let's clear with yellow to indicate voxelization step
-				GL.ClearColor ( 0.5f, 0.5f, 0f, 1.0f );
-				GL.Clear ( ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit );
+				//GL.ClearColor ( 0.5f, 0.5f, 0f, 1.0f );
+				//GL.Clear ( ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit );
 				break;
 			}
 		}
@@ -101,26 +103,20 @@ public class WindowsHolder : GameWindow {
 		ModelOffset.Move (input, Matrix4.Identity, (float)(speed * args.Time), Keys.Left, Keys.Right, Keys.Up, Keys.Down, Keys.Unknown, Keys.Unknown);
 		if ( input.IsKeyDown ( Keys.Space ) ) ModelOffset = Vector3.Zero;
 
-		if ( mouse.IsButtonDown ( MouseButton.Left ) ) {
-			CameraRotation.Y -= mouse.Delta.Y * 0.01f;
-			CameraRotation.X -= mouse.Delta.X * 0.01f;
-			CameraRotation.Y = MathHelper.Clamp ( CameraRotation.Y, -MathHelper.PiOver2 + 0.01f, MathHelper.PiOver2 - 0.01f );
-		}
-		Matrix4 yawLeftRightRotation = Matrix4.CreateRotationY ( CameraRotation.X );
-		Matrix4 pitchUpDownRotation = Matrix4.CreateRotationX ( CameraRotation.Y );
-		Matrix4 cameraSpace = pitchUpDownRotation * yawLeftRightRotation;
-		//CameraPosition.Move (input, cameraSpace, (float)(speed * args.Time), Keys.W, Keys.S, Keys.A, Keys.D, Keys.Q, Keys.E);
+		if ( mouse.IsButtonDown ( MouseButton.Left ) )
+			Camera.ApplyRotationDelta ( mouse.Delta );
+
 		if (mouse.IsButtonDown(MouseButton.Right)) {
-			CameraPosition += Vector3.TransformVector ( Vector3.UnitX, cameraSpace ) * mouse.Delta.X * 0.01f;
-			CameraPosition -= Vector3.TransformVector ( Vector3.UnitY, cameraSpace ) * mouse.Delta.Y * 0.01f;
+			Camera.Position -= Vector3.TransformVector ( Vector3.UnitX, Camera.CamSpace ) * mouse.Delta.X * 0.01f;
+			Camera.Position -= Vector3.TransformVector ( Vector3.UnitY, Camera.CamSpace ) * mouse.Delta.Y * 0.01f;
 		}
-		Vector3 forward = Vector3.TransformVector ( Vector3.UnitZ, cameraSpace );
-		CameraPosition -= forward * mouse.ScrollDelta.Y * 0.1f;
+		Vector3 forward = Vector3.TransformVector ( Vector3.UnitZ, Camera.CamSpace );
+		Camera.Position += forward * mouse.ScrollDelta.Y * 0.1f;
 		if ( input.IsKeyDown ( Keys.Tab ) ) {
-			CameraPosition = Vector3.UnitX;
-			CameraRotation = Vector2.Zero;
+			Camera.Position = Vector3.UnitX;
+			Camera.Rotation = Vector2.Zero;
 		}
-		viewMatrix = Matrix4.LookAt (CameraPosition, CameraPosition - forward, Vector3.UnitY);
+		//viewMatrix = Matrix4.LookAt (Camera.Position, Camera.Position - forward, Vector3.UnitY);
 
 		VoxelSlicePosition.Move (input, Matrix4.Identity, (float)(speed * args.Time), Keys.I, Keys.K, Keys.J, Keys.L, Keys.U, Keys.O);
 

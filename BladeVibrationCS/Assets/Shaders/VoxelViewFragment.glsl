@@ -18,10 +18,10 @@ void main() {
         d = 1/(1.0 + d);
         FragColor = d * vec4(0.1, 0.6, 0.0, 1.0); // Dark green fading out
     } else {
-        float v = texture(voxelTexture, fragPos).r;
-        if (v < 0.001)
+        vec4 v = texture(voxelTexture, fragPos);
+        if (v.r < 0.001)
             FragColor = vec4(1.0, 1.0, 0.0, 1.0); // Highlight empty voxels in yellow
         else
-            FragColor = vec4(1 - v, 0.0, v, 1.0); // Color based on voxel value
+            FragColor = vec4(1 - v.rgb, 0.0, v.b, 1.0); // Color based on voxel value
     }
 }

@@ -6,39 +6,14 @@ using System.Collections.Generic;
 
 namespace BladeVibrationCS; 
 public class RenderController {
-	const float QuadSide = 10;
+	const float QuadSide = 0.3f;
 	const float QuadBase = -QuadSide / 2;
 	const float QuadTop = QuadBase + QuadSide;
 
-	public readonly static float[] quadVertices = {
-			QuadBase,  QuadTop, 0,
-			QuadTop,  QuadTop, 0,
-			QuadTop,  QuadBase, 0,
-			QuadBase,  QuadBase, 0,
-			0, 0,  QuadBase,
-			};
-	public readonly static int[] quadIndices = {
-			0, 1, 2,
-			0, 1, 3,
-			0, 1, 4,
-			1, 2, 4,
-			2, 3, 4,
-			3, 0, 4,
-
-			1, 2, 0, 
-			1, 3, 0, 
-			1, 4, 0, 
-			2, 4, 1, 
-			3, 4, 2, 
-			0, 4, 3,
-			};
-	public static readonly int quadVBO;
-	public static readonly int quadVAO;
-	public static readonly int quadEBO;
-
-	static RenderController () {
-		(quadVBO, quadVAO, quadEBO) = ModelHolder.PushModelToGPU ( quadVertices, quadIndices );
-	}
+	public readonly static Primitives.Star StarPrimitive = new ();
+	public readonly static Primitives.Plane PlanePrimitive = new ();
+	public readonly static Primitives.Cross3 Cross3DPrimitive = new ();
+	public readonly static Primitives.SkyBox SkyBoxPrimitive = new ();
 
 	readonly Controler Controler;
 	private readonly Queue<AShaderProgram> DrawRequests = new ();
@@ -49,13 +24,16 @@ public class RenderController {
 	private AShaderProgram lastProgram = null;
 	private readonly Queue<AShaderProgram> nextDrawQueue = new ();
 	private readonly HashSet<AShaderProgram> programScrapYard = new ();
+
+	public AShaderProgram LastRepeatableProgram { get; private set; } = null;
 	public AShaderProgram NextDrawRequest {
 		get {
 			if ( DrawRequests.Count == 0 ) return null;
 			AShaderProgram program = DrawRequests.Dequeue ();
-			if ( program.IsRepeatable )
+			if ( program.IsRepeatable ) {
 				nextDrawQueue.Enqueue ( program );
-			else
+				LastRepeatableProgram = program;
+			} else
 				programScrapYard.Add ( program );
 			program.SwitchTo ( lastProgram, ScreenSize );
 			lastProgram = program;
@@ -70,6 +48,8 @@ public class RenderController {
 			program.Dispose ();
 	}
 
+
+
 	public RenderController ( Controler controler, Vector2i screenSize ) {
 		Controler = controler;
 		ScreenSize = screenSize;
@@ -79,22 +59,23 @@ public class RenderController {
 		while ( Controler.LoadModelRequests.Reader.TryRead ( out var loadRequest ) ) {
 			int modelId = Models.Count;
 			Models.Add ( ( new ( loadRequest.ModelPath, loadRequest.YoungModuli ), null) );
-			Program.StdOut ( "Model loaded successfully." );
+			EntryProgram.StdOut ( "Model loaded successfully." );
 		}
 
 		while ( Controler.VoxelizeRequests.Reader.TryRead ( out var voxelizeRequest ) ) {
 			int requests = 0;
 			for (int i = 0; i < Models.Count; i++ ) {
 				if ( Models[i].voxel != null ) continue;
-				VoxelObject vo = new ( Models[i].model, (Models[i].model.MaxX - Models[i].model.MinX) / 256 );
+				VoxelObject vo = new ( Models[i].model, (Models[i].model.MaxX - Models[i].model.MinX) / VoxelObject.MAX_VOXELS_PER_AXIS );
 				Models[i] = (Models[i].model, vo);
 				if ( vo.IsRepeatable ) {
-					foreach ( var shader in DrawRequests ) shader.IsRepeatable = false;
+					foreach ( var shader in DrawRequests )
+						shader.IsRepeatable = false;
 				}
 				DrawRequests.Enqueue ( vo );
 				requests++;
 			}
-			Program.StdOut ( $"Voxelization request ({requests}) pushed to render queue" );
+			EntryProgram.StdOut ( $"Voxelization request ({requests}) pushed to render queue" );
 		}
 
 		while ( Controler.SaveVoxelRequests.Reader.TryRead ( out var saveVoxelRequest ) ) {
@@ -104,12 +85,12 @@ public class RenderController {
 				Models[i].voxel.Save ( $"{saveVoxelRequest.Filename}_model{i}" );
 				saved++;
 			}
-			Program.StdOut ( $"Saved {saved} voxel objects." );
+			EntryProgram.StdOut ( $"Saved {saved} voxel objects." );
 		}
 
 		while ( Controler.RenderModeRequests.Reader.TryRead ( out var renderMode ) ) {
 			if ( Models.Count == 0 ) {
-				Program.StdOut ( "Load a model before changing render mode." );
+				EntryProgram.StdOut ( "Load a model before changing render mode." );
 				return;
 			}
 
@@ -120,7 +101,7 @@ public class RenderController {
 				foreach ( (var model, var _) in Models ) {
 					DrawRequests.Enqueue ( new BasicMeshRenderer ( model ) );
 				}
-				Program.StdOut ( $"Switched to Solid render mode for {Models.Count} models." );
+				EntryProgram.StdOut ( $"Switched to Solid render mode for {Models.Count} models." );
 				break;
 			case RenderModeRequest.RenderMode.Voxel:
 				int voxelCount = 0;
@@ -130,19 +111,9 @@ public class RenderController {
 						voxelCount++;
 					}
 				}
-				Program.StdOut ( $"Switched to Voxel render mode for {voxelCount} models. Control position using the IJKLUO keys and rotation with TFGHRY." );
+				EntryProgram.StdOut ( $"Switched to Voxel render mode for {voxelCount} models. Control position using the IJKLUO keys and rotation with TFGHRY." );
 				break;
 			}
 		}
-	}
-
-
-
-	/// <summary> Draw simple plane on near-plane to overlay 2D content </summary>
-	public static void Draw2D () {
-		GL.BindVertexArray ( quadVAO );
-		//GL.BindBuffer ( BufferTarget.ArrayBuffer, quadVBO );
-		//GL.BindBuffer ( BufferTarget.ElementArrayBuffer, quadEBO );
-		GL.DrawElements ( PrimitiveType.Triangles, quadIndices.Length, DrawElementsType.UnsignedInt, 0 );
 	}
 }

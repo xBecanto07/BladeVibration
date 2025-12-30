@@ -42,12 +42,22 @@ public static class Assets {
 		DirectoryInfo[] subDirs = exePathDir.GetDirectories ( AssetFolderName );
 		if ( subDirs.Length > 0 ) return subDirs[0].FullName;
 
+
 		var potentialDebug = GetParent ( exePathDir );
 		var potentialBin = GetParent ( potentialDebug );
-		if ( potentialBin.Name == "bin" && ( potentialDebug.Name == "Debug" || potentialDebug.Name == "Release" ) ) {
-			var projectDir = GetParent ( potentialBin );
-			subDirs = projectDir.GetDirectories ( AssetFolderName );
-			if ( subDirs.Length > 0 ) return subDirs[0].FullName;
+		var potentialMainProj = GetParent ( potentialBin );
+		if ( potentialBin?.Name == "bin"
+			&& ( potentialDebug?.Name == "Debug" || potentialDebug?.Name == "Release" ) ) {
+			if ( potentialMainProj?.Name != nameof ( BladeVibrationCS ) ) {
+				// Started from another project
+				var solutionDir = GetParent ( potentialMainProj );
+				potentialMainProj = solutionDir.GetDirectories ( nameof ( BladeVibrationCS ) ).FirstOrDefault ();
+			}
+
+			//var projectDir = GetParent ( potentialBin );
+			subDirs = potentialMainProj?.GetDirectories ( AssetFolderName );
+			if ( subDirs?.Length > 0 )
+				return subDirs[0].FullName;
 		}
 
 		throw new DirectoryNotFoundException ( $"Could not find asset path: {AssetFolderName}" );

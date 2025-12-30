@@ -1,6 +1,6 @@
 ﻿#version 450 core
 layout(location = 0) in vec3 aPos;
-flat out vec3 vWorldPos;
+out vec3 vWorldPos;
 uniform mat4 model;
 uniform mat4 view;
 uniform mat4 proj;

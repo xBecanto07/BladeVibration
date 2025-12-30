@@ -5,6 +5,7 @@ using OpenTK.Graphics.OpenGL4;
 
 namespace BladeVibrationCS; 
 public class ModelHolder : IDisposable {
+	private static uint MatID = 1;
 	public const float YM_Air = 1e3f;
 	public const float YM_Wood = 9.5e9f;
 	public const float YM_Bronze = 112e9f;
@@ -35,7 +36,11 @@ public class ModelHolder : IDisposable {
 		var importer = new Assimp.AssimpContext ();
 		var scene = importer.ImportFile ( modelPath, Assimp.PostProcessSteps.Triangulate );
 
+		List<float> matIDs = [];
+
 		foreach ( var mesh in scene.Meshes ) {
+			float matId = MatID++;
+			matIDs.Add ( matId );
 			int vN = mesh.VertexCount;
 			Vertices.Capacity += vN;
 			float YM = YoungModuli.GetValueOrDefault ( mesh.Name, YM_Air );
@@ -51,7 +56,7 @@ public class ModelHolder : IDisposable {
 					T = mesh.Normals[i].Z,
 					U = mesh.TextureCoordinateChannelCount > 0 ? mesh.TextureCoordinateChannels[0][i].X : 0f,
 					V = mesh.TextureCoordinateChannelCount > 0 ? mesh.TextureCoordinateChannels[0][i].Y : 0f,
-					E = YM
+					matID = matId,
 				} );
 			}
 
@@ -69,16 +74,18 @@ public class ModelHolder : IDisposable {
 			}
 		}
 
-		Data = [.. Vertices.SelectMany ( v => new[] { v.X, v.Y, v.Z, v.R, v.S, v.T, v.U, v.V, v.E } )];
+		Data = [.. Vertices.SelectMany ( v => new[] { v.X, v.Y, v.Z, v.R, v.S, v.T, v.U, v.V, v.matID } )];
 		DataIndices = Indices.ToArray ();
+
+		EntryProgram.StdOut ( $"Model '{modelPath}' loaded: {VertexCount} vertices, {FaceCount} faces. Materials used:\n\t{string.Join ( ", ", matIDs )}\nLimits: X[{MinX}, {MaxX}], Y[{MinY}, {MaxY}], Z[{MinZ}, {MaxZ}]" );
 	}
 
 	public void PushToGPU () {
 		if ( IsOnGPU ) throw new InvalidOperationException ( "Model is already pushed to GPU." );
-		(VBO, VAO, EBO) = PushModelToGPU ( Data, DataIndices, 9 );
+		(VBO, VAO, EBO) = PushModelToGPU ( Data, DataIndices );
 	}
 
-	public static (int vbo, int vao, int ebo) PushModelToGPU ( float[] vertices, int[] indices, int stride = 3 ) {
+	public static (int vbo, int vao, int ebo) PushModelToGPU ( float[] vertices, int[] indices ) {
 		int vao = GL.GenVertexArray ();
 		int vbo = GL.GenBuffer ();
 		int ebo = GL.GenBuffer ();
@@ -94,8 +101,14 @@ public class ModelHolder : IDisposable {
 		GL.BindBuffer ( BufferTarget.ElementArrayBuffer, ebo );
 		GL.BufferData ( BufferTarget.ElementArrayBuffer, indices.Length * sizeof ( int ), indices, BufferUsageHint.StaticDraw );
 
+		GL.VertexAttribPointer ( 0, 3, VertexAttribPointerType.Float, false, 9 * sizeof ( float ), 0 ); // Position
+		GL.VertexAttribPointer ( 1, 3, VertexAttribPointerType.Float, false, 9 * sizeof ( float ), 3 * sizeof ( float ) ); // Normal
+		GL.VertexAttribPointer ( 2, 2, VertexAttribPointerType.Float, false, 9 * sizeof ( float ), 6 * sizeof ( float ) ); // UV
+		GL.VertexAttribPointer ( 3, 1, VertexAttribPointerType.Float, false, 9 * sizeof ( float ), 8 * sizeof ( float ) ); // Mat ID
 		GL.EnableVertexAttribArray ( 0 );
-		GL.VertexAttribPointer ( 0, 3, VertexAttribPointerType.Float, false, stride * sizeof ( float ), 0 ); // Position
+		GL.EnableVertexAttribArray ( 1 );
+		GL.EnableVertexAttribArray ( 2 );
+		GL.EnableVertexAttribArray ( 3 );
 
 		GL.BindVertexArray ( 0 );
 		GL.BindBuffer ( BufferTarget.ArrayBuffer, 0 );
@@ -131,5 +144,5 @@ public struct Vertex {
 	public float X, Y, Z; // Position
 	public float R, S, T; // Normal
 	public float U, V;    // Texture Coordinates
-	public float E;       // Young's Modulus
+	public float matID;       // Material ID / mesh ID
 }

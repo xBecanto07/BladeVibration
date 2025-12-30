@@ -12,6 +12,11 @@ public abstract class AShaderProgram : IDisposable {
 	protected const int BACKGROUND_LOW = 56;
 	protected const int BACKGROUND_MIN = 27;
 
+	public const int RENDER_MODE_SIMPLE = 1;
+	public const int RENDER_MODE_HARD = 2;
+	public const int RENDER_MODE_PHONG = 3;
+	public const int RENDER_MODE_OBJECTS = 4;
+
 	public readonly int Handle;
 	private readonly List<Shader> Shaders;
 
@@ -56,7 +61,7 @@ public abstract class AShaderProgram : IDisposable {
 		if ( last?.GetType () == GetType () ) return;
 		Use ();
 		SwitchToInner ( last, screenSize );
-		Program.StdOut ( $"Switching shader from {last?.GetType().Name ?? "null"} to {GetType().Name}" );
+		EntryProgram.StdOut ( $"Switching shader from {last?.GetType().Name ?? "null"} to {GetType().Name}" );
 	}
 
 	protected abstract void SwitchToInner ( AShaderProgram last, Vector2i screenSize );
@@ -70,6 +75,8 @@ public abstract class AShaderProgram : IDisposable {
 	}
 	public void SetUniform ( string name, int X, int Y, int Z, int W )
 		=> GL.Uniform4 ( GetUniformLocation ( name ), X, Y, Z, W );
+	public void SetUniform ( string name, float X, float Y, float Z, float W )
+		=> GL.Uniform4 ( GetUniformLocation ( name ), X, Y, Z, W );
 	public void SetUniform ( string name, float X, float Y, float Z )	
 		=> GL.Uniform3 ( GetUniformLocation ( name ), X, Y, Z );
 	public void SetUniform ( string name, float X, float Y )				
@@ -80,6 +87,10 @@ public abstract class AShaderProgram : IDisposable {
 		=> GL.UniformMatrix4 ( GetUniformLocation ( name ), false, ref matrix );
 	public void SetUniform ( string name, int textID)
 		=> GL.Uniform1 ( GetUniformLocation ( name ), textID );
+	public void SetUniform ( string name, int[] vals )
+		=> GL.Uniform1 ( GetUniformLocation ( name ), vals.Length, vals );
+	public void SetUniform ( string name, float[] vals )
+		=> GL.Uniform1 ( GetUniformLocation ( name ), vals.Length, vals );
 
 
 
@@ -112,7 +123,7 @@ public abstract class AShaderProgram : IDisposable {
 		GL.BindFramebuffer ( FramebufferTarget.Framebuffer, 0 );
 		GL.Viewport ( 0, 0, width, height );
 		GL.ColorMask ( true, true, true, true );
-		GL.CullFace ( TriangleFace.Back );
+		GL.CullFace ( TriangleFace.FrontAndBack );
 	}
 
 

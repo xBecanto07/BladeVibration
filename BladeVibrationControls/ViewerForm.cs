@@ -1,0 +1,133 @@
+using BladeVibrationCS;
+using BladeVibrationCS.GpuPrograms;
+
+namespace BladeVibrationControls;
+public partial class ViewerForm : Form {
+	readonly WindowsHolder GpuWindow;
+	readonly Controler Controller;
+	readonly RenderController RenderController;
+
+	bool isUpdating = true;
+	AShaderProgram lastLastProgram = null;
+
+	public ViewerForm ( WindowsHolder window, Controler controler ) {
+		InitializeComponent ();
+		Controller = controler;
+		GpuWindow = window;
+		RenderController = window.renderController;
+		LBL_StatusMsg.Text = "Status: Started";
+
+		RB_PM_Ortho.Text = nameof ( AVoxelizer.ProjectionType.Orthographic );
+		RB_PM_Persp.Text = nameof ( AVoxelizer.ProjectionType.Perspective );
+
+		MaterialEntries = new MaterialInfo[MaterialHolder.BUFFER_SIZE];
+		for ( int i = 0; i < MaterialHolder.BUFFER_SIZE; i++ ) {
+			Point loc = new ( 3, 40 + i * 29 );
+			MaterialEntries[i].Set ( i, loc, GB_BM_Materials );
+		}
+	}
+
+	private void BTN_Pause_Click ( object sender, EventArgs e ) {
+		isUpdating = !isUpdating;
+		BTN_Apply.Enabled = !isUpdating; // Allow applying changes only when paused
+		BTN_Apply.Visible = !isUpdating;
+		LBL_StatusMsg.Text = isUpdating ? "Status: Running" : "Status: Paused";
+		BTN_Pause.Text = isUpdating ? "Pause Sync" : "Resume Sync";
+	}
+
+	private void BTN_Apply_Click ( object sender, EventArgs e ) {
+		LBL_StatusMsg.Text = "Status: Applied changes";
+		GpuWindow.Location = GpuWindow.Location.ParseLoc ( TB_OV_WinPosX, TB_OV_WinPosY );
+		GpuWindow.ModelOffset.Parse ( TB_BM_OffsetX, TB_BM_OffsetY, TB_BM_OffsetZ );
+		GpuWindow.Camera.Position.Parse ( TB_BM_CamPosX, TB_BM_CamPosY, TB_BM_CamPosZ );
+		GpuWindow.Camera.Rotation.Parse ( TB_BM_CamRotX, TB_BM_CamRotY );
+
+		switch ( lastLastProgram ) {
+		case BasicMeshRenderer basicMesh:
+			basicMesh.MaterialHolder.Parse ( MaterialEntries );
+			basicMesh.MaterialHolder.UpdateGPU ();
+			break;
+		case VoxelObject voxelizer:
+			voxelizer.CamPos.Parse ( TB_VO_CamPosX, TB_VO_CamPosY, TB_VO_CamPosZ );
+			voxelizer.CamDir.Parse ( TB_VO_CamRotX, TB_VO_CamRotY, TB_VO_CamRotZ );
+			if ( RB_PM_Persp.Checked ) {
+				voxelizer.LastProjectionPersp.Row0.Parse ( TB_VO_ProjX0, TB_VO_ProjX1 );
+				voxelizer.LastProjectionPersp.Row1.Parse ( TB_VO_ProjY0, TB_VO_ProjY1 );
+				voxelizer.LastProjectionPersp.Row2.Parse ( TB_VO_ProjZ0, TB_VO_ProjZ1 );
+				voxelizer.CurrentProjMode = AVoxelizer.ProjectionType.Perspective;
+			} else if ( RB_PM_Ortho.Checked ) {
+				voxelizer.LastProjectionOrto.Row0.Parse ( TB_VO_ProjX0, TB_VO_ProjX1 );
+				voxelizer.LastProjectionOrto.Row1.Parse ( TB_VO_ProjY0, TB_VO_ProjY1 );
+				voxelizer.LastProjectionOrto.Row2.Parse ( TB_VO_ProjZ0, TB_VO_ProjZ1 );
+				voxelizer.CurrentProjMode = AVoxelizer.ProjectionType.Orthographic;
+			}
+			break;
+		}
+	}
+
+	private void UpdateTimer_Tick ( object sender, EventArgs e ) {
+		if ( !isUpdating ) return;
+
+		var gpuPos = EntryProgram.GPUWindowPosition;
+		if ( !gpuPos.HasValue )
+			return;
+
+		Location = new Point ( gpuPos.Value.X, gpuPos.Value.Y );
+		TB_OV_WinPosX.Text = GpuWindow.Location.X.ToString ();
+		TB_OV_WinPosY.Text = GpuWindow.Location.Y.ToString ();
+
+		AShaderProgram lastProgram = RenderController.LastRepeatableProgram;
+		int newIndex = 0;
+		switch ( lastProgram ) {
+		case null:
+			newIndex = 0;
+			break;
+
+		case BasicMeshRenderer basicMesh:
+			newIndex = 1;
+			TB_BM_Scale.Text = GpuWindow.scale.ToString ( "F4" );
+			GpuWindow.ModelOffset.Fill ( TB_BM_OffsetX, TB_BM_OffsetY, TB_BM_OffsetZ );
+			GpuWindow.Camera.Position.Fill ( TB_BM_CamPosX, TB_BM_CamPosY, TB_BM_CamPosZ );
+			GpuWindow.Camera.Rotation.Fill ( TB_BM_CamRotX, TB_BM_CamRotY );
+			GpuWindow.Camera.ApplyAngle ();
+
+			basicMesh.MaterialHolder.Fill ( MaterialEntries );
+			break;
+
+		case VoxelObject voxelizer:
+			newIndex = 2;
+			voxelizer.BasePosition.Fill ( TB_VO_ModelBase_X, TB_VO_ModelBase_Y, TB_VO_ModelBase_Z );
+			voxelizer.Size.Fill ( TB_VO_ModelSize_X, TB_VO_ModelSize_Y, TB_VO_ModelSize_Z );
+
+			TB_VO_DimsX.Text = voxelizer.VoxX.ToString ();
+			TB_VO_DimsY.Text = voxelizer.VoxY.ToString ();
+			TB_VO_DimsZ.Text = voxelizer.VoxZ.ToString ();
+			TB_VO_VoxelSize.Text = voxelizer.VoxelSize.ToString ( "F4" );
+
+			voxelizer.CurrentProjMode.Select ( RB_PM_Ortho, RB_PM_Persp );
+			voxelizer.CamPos.Fill ( TB_VO_CamPosX, TB_VO_CamPosY, TB_VO_CamPosZ );
+			voxelizer.CamDir.Fill ( TB_VO_CamRotX, TB_VO_CamRotY, TB_VO_CamRotZ );
+
+			switch ( voxelizer.CurrentProjMode ) {
+			case AVoxelizer.ProjectionType.Orthographic:
+				voxelizer.LastProjectionOrto.Row0.Fill ( TB_VO_ProjX0, TB_VO_ProjX1 );
+				voxelizer.LastProjectionOrto.Row1.Fill ( TB_VO_ProjY0, TB_VO_ProjY1 );
+				voxelizer.LastProjectionOrto.Row2.Fill ( TB_VO_ProjZ0, TB_VO_ProjZ1 );
+				RB_PM_Ortho.Checked = true;
+				break;
+			case AVoxelizer.ProjectionType.Perspective:
+				voxelizer.LastProjectionPersp.Row0.Fill ( TB_VO_ProjX0, TB_VO_ProjX1 );
+				voxelizer.LastProjectionPersp.Row1.Fill ( TB_VO_ProjY0, TB_VO_ProjY1 );
+				voxelizer.LastProjectionPersp.Row2.Fill ( TB_VO_ProjZ0, TB_VO_ProjZ1 );
+				RB_PM_Persp.Checked = true;
+				break;
+			}
+			break;
+		}
+
+		if ( lastLastProgram != lastProgram ) {
+			lastLastProgram = lastProgram;
+			ShaderSelector.SelectedIndex = newIndex;
+		}
+	}
+}

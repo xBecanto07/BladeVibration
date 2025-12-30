@@ -5,7 +5,7 @@ using System.Threading;
 using System.Linq;
 
 namespace BladeVibrationCS; 
-public static class Program {
+public static class EntryProgram {
 	static Controler controler = new ();
 	static Dictionary<string, Action<string[]>> Commands = new () {
 		{ "exit", _ => controler.RequestStop () },
@@ -71,18 +71,34 @@ public static class Program {
 		},
 	};
 
-	static void Main ( string[] args ) {
+	private static WindowsHolder window;
+	public static (int X, int Y)? GPUWindowPosition => window != null ? ( window.Location.X + window.Size.X + 5, window.Location.Y ) : null;
+
+	public static void Main ( string[] args ) => Run ( null );
+
+	public static void Run ( Action<WindowsHolder, Controler, int, int> guiStarter ) {
 		Thread consoleThread = new ( RunConsole );
+		Thread guiThread = null;
 		consoleThread.Start ();
+		guiThread?.Start ();
 		while ( consoleThread.IsAlive ) {
 			controler.RunGPURequests.Reader.TryRead ( out bool startGPU );
-			if ( startGPU ) RunWindow (); // Blocking call
+			if ( startGPU ) RunWindow ( ref guiThread, guiStarter ); // Blocking call
 			else Thread.Sleep ( 250 );
 		}
+		controler.Dispose ();
+		consoleThread.Join ();
+		guiThread?.Join ();
 	}
 
-   static void RunWindow () {
-		using ( var window = new WindowsHolder ( controler, 1600, 900 ) ) {
+   static void RunWindow ( ref Thread guiThread, Action<WindowsHolder, Controler, int, int> guiStarter ) {
+		using ( window = new WindowsHolder ( controler, 1400, 900 ) ) {
+			if ( guiStarter != null ) {
+				window.Location = new ( window.Location.X - 120, window.Location.Y );
+				var guiStartPos = GPUWindowPosition.Value;
+				guiThread = new ( () => guiStarter ( window, controler, guiStartPos.X, guiStartPos.Y ) );
+				guiThread.Start ();
+			}
 			window.Run ();
 		}
 	}
@@ -90,7 +106,6 @@ public static class Program {
 		Commands["gpu"] ( [] );
 		Commands["loadmodel"] ( ["test"] );
 		Commands["mode"] ( ["solid"] );
-		//Commands["voxelize"] ( [] );
 
 		StdOut ( "Available commands:" );
 		// Split the list into two columns

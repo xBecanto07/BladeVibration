@@ -19,7 +19,7 @@ public class MaterialHolder {
 		for ( int i = 0; i < BUFFER_SIZE; i++ ) {
 			shininess[i] = 32f;
 			diffuseStrength[i] = 0.5f;
-			stiffness[i] = 0.5f;
+			stiffness[i] = ModelHolder.YM_Air;
 			renderMode[i] = AShaderProgram.RENDER_MODE_PHONG;
 		}
 	}
@@ -60,7 +60,7 @@ public class MaterialHolder {
 	public void Use ( int index ) {
 		//GL.BindBufferBase ( BufferRangeTarget.UniformBuffer, index, uboHandle );
 		try { OwnerProgram.SetUniform ( "MatProps_renderMode", renderMode ); } catch ( Exception _ ) {}
-		try { OwnerProgram.SetUniform ( "MatProps_shininess", stiffness ); } catch ( Exception _ ) {}
+		try { OwnerProgram.SetUniform ( "MatProps_shininess", shininess ); } catch ( Exception _ ) {}
 		try { OwnerProgram.SetUniform ( "MatProps_diffuseStrength", diffuseStrength ); } catch ( Exception _ ) {}
 		try { OwnerProgram.SetUniform ( "MatProps_stiffness", stiffness ); } catch ( Exception _ ) { }
 	}

@@ -54,9 +54,10 @@ public class BasicMeshRenderer : AShaderProgram {
 		SetUniform ( "camPos", camPos.X, camPos.Y, camPos.Z );
 		SetUniform ( "specularColor", 0.8f, 1f, 0.8f );
 
+		SetUniform ( "TestFrontBack", 0 );
 		SetUniform ( "colorA", 1f, 1f, 0f );
 		SetUniform ( "colorB", 0f, 1f, 1f );
-		SetUniform ( "scale", 4.0f );
+		SetUniform ( "scale", 4.0f, 4.0f, 4.0f );
 		SetUniform ( "offset", 0, 0, 0 );
 		SetUniform ( "matOffset", 6 );
 		RenderController.SkyBoxPrimitive.Render ();
@@ -64,21 +65,23 @@ public class BasicMeshRenderer : AShaderProgram {
 		SetUniform ( "colorA", 1f, 0f, 0f );
 		SetUniform ( "colorB", 0f, 0f, 1f );
 		SetUniform ( "offset", modelOffset.X, modelOffset.Y, modelOffset.Z );
-		SetUniform ( "scale", scale );
+		SetUniform ( "scale", scale, scale, scale );
 		//SetUniform ( "shadingMethod", RENDER_MODE_PHONG );
 		SetUniform ( "camPos", camPos.X, camPos.Y, camPos.Z );
 
 		GL.BindVertexArray ( Model.VAO );
 		SetUniform ( "matOffset", 0 );
+		SetUniform ( "TestFrontBack", 1 );
 		GL.DrawElements ( PrimitiveType.Triangles, Model.IndexCount, DrawElementsType.UnsignedInt, 0 );
 
-		SetUniform ( "scale", RENDER_MODE_SIMPLE );
+		//SetUniform ( "scale", RENDER_MODE_SIMPLE );
 		//SetUniform ( "shadingMethod", 1 );
 
 		const float Bounds = 2f;
 		const float Offset2D = 0.3f;
 		//SetUniform ( "matOffset", 6 );
 		SetUniform ( "matOffset", 7 );
+		SetUniform ( "TestFrontBack", 0 );
 		for ( float x = -Bounds; x <= Bounds; x += Offset2D )
 			for ( float y = -Bounds; y <= Bounds; y += Offset2D )
 				for ( float z = -Bounds; z <= Bounds; z += Offset2D ) {

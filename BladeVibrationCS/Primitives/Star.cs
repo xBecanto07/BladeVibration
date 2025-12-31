@@ -21,9 +21,9 @@ public abstract class APrimitive {
 }
 
 public class Star : APrimitive {
-	const float QuadSide = 0.3f;
-	const float QuadBase = -QuadSide / 2;
-	const float QuadTop = QuadBase + QuadSide;
+	public const float QuadSide = 0.3f;
+	public const float QuadBase = -QuadSide / 2;
+	public const float QuadTop = QuadBase + QuadSide;
 
 	public readonly static float[] starVertices = {
 			QuadBase,  QuadTop, 0,	 1, 0, 0,  0, 0,  DEF_MAT_ID,
@@ -52,9 +52,9 @@ public class Star : APrimitive {
 }
 
 public class Plane : APrimitive {
-	const float QuadSide = 999f;
-	const float QuadBase = -QuadSide / 2;
-	const float QuadTop = QuadBase + QuadSide;
+	public const float QuadSide = 999f;
+	public const float QuadBase = -QuadSide / 2;
+	public const float QuadTop = QuadBase + QuadSide;
 	public readonly static float[] planeVertices = {
 			QuadBase,  QuadTop, 0,	 1, 0, 0,  0, 0,  DEF_MAT_ID,
 			QuadTop,  QuadTop, 0,	 1, 0, 0,  0, 0,  DEF_MAT_ID,
@@ -71,9 +71,9 @@ public class Plane : APrimitive {
 
 /// <summary>3 crossed planes centered at the origin.</summary>
 public class Cross3 : APrimitive {
-	const float QuadSide = 999f;
-	const float QuadBase = -QuadSide / 2;
-	const float QuadTop = QuadBase + QuadSide;
+	public const float QuadSide = 999f;
+	public const float QuadBase = -QuadSide / 2;
+	public const float QuadTop = QuadBase + QuadSide;
 
 	public readonly static float[] cross3Vertices = {
 			// Plane XY
@@ -109,7 +109,7 @@ public class Cross3 : APrimitive {
 }
 
 public class SkyBox : APrimitive {
-	const float Size = 19f;
+	public const float Size = 19f;
 	public readonly static float[] skyboxVertices = {
 		-Size, -Size, -Size,  1, 0, 0,  0, 0,  DEF_MAT_ID,
 		+Size, -Size, -Size,  1, 0, 0,  0, 0,  DEF_MAT_ID,

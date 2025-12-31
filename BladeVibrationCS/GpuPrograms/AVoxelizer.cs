@@ -15,12 +15,13 @@ public abstract class AVoxelizer : AShaderProgram {
 	protected Matrix4 view;
 	public Vector3 CamPos = Vector3.Zero;
 	public Vector3 CamDir = Vector3.UnitZ;
+	public Vector2i LastScreenSize;
 
 	public AVoxelizer ( ModelHolder model, float voxelSize, bool startRepeatable, byte border )
-		: base ( startRepeatable, ("Vertex.glsl", ShaderType.VertexShader)
-			, ("Fragment.glsl", ShaderType.FragmentShader) ) {
-		//, ("VoxelizerVertex.glsl", ShaderType.VertexShader)
-		//, ("VoxelizerFragment.glsl", ShaderType.FragmentShader) ) {
+		: base ( startRepeatable //, ("Vertex.glsl", ShaderType.VertexShader)
+			//, ("Fragment.glsl", ShaderType.FragmentShader) ) {
+			, ("VoxelizerVertex.glsl", ShaderType.VertexShader)
+			, ("VoxelizerFragment.glsl", ShaderType.FragmentShader) ) {
 		Model = model;
 		VoxelSize = voxelSize;
 		BasePosition = new Vector3 ( model.MinX, model.MinY, model.MinZ );
@@ -84,29 +85,50 @@ public abstract class AVoxelizer : AShaderProgram {
 		}
 	}
 
-	protected void Pass1_StencilInput ( int z, Action prepFrameBuffer ) {
-		ArgumentNullException.ThrowIfNull ( prepFrameBuffer );
-		prepFrameBuffer ();
+	//protected void Pass1_StencilInput ( int z, Action prepFrameBuffer ) {
+	//	ArgumentNullException.ThrowIfNull ( prepFrameBuffer );
+	//	prepFrameBuffer ();
 
+	protected void Pass0_BackgroundClear () {
+		float ratio = (Model.MaxZ - Model.MinZ) / (Model.MaxX - Model.MinX);
+		SetupNormalRendering ( LastScreenSize.X, (int)(LastScreenSize.X * ratio) );
+		SetUniform ( "RENDER_MODE", 3 );
+		Vector3 center = new Vector3 ( Model.MinX + Model.MaxX, Model.MinY + Model.MaxY, Model.MinZ + Model.MaxZ ) * 0.5f;
+		SetUniform ( "scale", 8.0f, 0.2f, 8.0f );
+		SetUniform ( "offset", center.X, center.Y, center.Z );
+		GL.Enable ( EnableCap.DepthTest );
+		GL.Disable ( EnableCap.StencilTest );
+		GL.StencilFunc ( StencilFunction.Always, 0, 0xff );
+		GL.StencilOp ( StencilOp.Keep, StencilOp.Keep, StencilOp.Keep );
+		GL.DepthMask ( true );
+		GL.ColorMask ( true, true, true, true );
+		GL.ClearColor ( 0f, 0f, 0f, 0f );
+		GL.Clear ( ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit );
+		RenderController.SkyBoxPrimitive.Render ();
+	}
+
+	protected void Pass1_StencilInput () {
 		GL.Disable ( EnableCap.DepthTest );
 		GL.DepthMask ( false );
 		GL.Enable ( EnableCap.StencilTest );
 
-		GL.ClearColor ( 0f, 0f, 0f, 0f );
-		GL.Clear ( ClearBufferMask.ColorBufferBit | ClearBufferMask.StencilBufferBit );
 		GL.ColorMask ( false, false, false, false );
+		GL.Clear ( ClearBufferMask.StencilBufferBit );
 
 		// 1st pass: setup stencil buffer
 		GL.StencilFunc ( StencilFunction.Always, 1, 0xff ); // Ignore the stencil buffer
-		GL.StencilOpSeparate ( StencilFace.Back, StencilOp.Keep, StencilOp.Keep, StencilOp.Incr ); // Entering object, increment (allow overflow)
-		GL.StencilOpSeparate ( StencilFace.Front, StencilOp.Keep, StencilOp.Keep, StencilOp.Decr ); // Exiting object, decrement (allow underflow)
+		GL.StencilOpSeparate ( StencilFace.Back, StencilOp.Keep, StencilOp.Keep, StencilOp.IncrWrap ); // Entering object, increment (allow overflow)
+		GL.StencilOpSeparate ( StencilFace.Front, StencilOp.Keep, StencilOp.Keep, StencilOp.DecrWrap ); // Exiting object, decrement (allow underflow)
 
-		SetProgramUniforms ( z, VoxelizerShaderMode.MODE_CENTER );
+		//SetProgramUniforms ( z, VoxelizerShaderMode.MODE_CENTER );
 		GL.BindVertexArray ( Model.VAO );
-		GL.DrawArrays ( PrimitiveType.Triangles, 0, Model.VertexCount );
+		SetUniform ( "RENDER_MODE", 1 );
+		SetUniform ( "scale", 1.0f, 1.0f, 1.0f );
+		SetUniform ( "offset", 0.0f, 0.0f, 0.0f );
+		GL.DrawElements ( PrimitiveType.Triangles, Model.IndexCount, DrawElementsType.UnsignedInt, 0 );
 	}
 
-	protected void Pass2_StencilTest ( int z ) {
+	protected void Pass2_StencilTest () {
 		// This probably doesn't actually need to draw the actual model as the stencil buffer already has the info.
 		//   Drawing single rectangle covering the slice just to call a fragment shader for each pixel in the slice should be enough.
 		GL.StencilFunc ( StencilFunction.Equal, 1, 0xff ); // Pass where stencil value is 1, i.e., inside the object
@@ -115,9 +137,10 @@ public abstract class AVoxelizer : AShaderProgram {
 															  // Set up orthographic projection and view matrix for slicing
 															  //   Use the near plane to slice for current Z index
 
-		SetProgramUniforms ( z, VoxelizerShaderMode.MODE_CENTER );
 		GL.BindVertexArray ( Model.VAO );
-		GL.DrawArrays ( PrimitiveType.Triangles, 0, Model.VertexCount );
+		SetUniform ( "scale", 1.0f, 1.0f, 1.0f );
+		SetUniform ( "offset", 0.0f, 0.0f, 0.0f );
+		GL.DrawElements ( PrimitiveType.Triangles, Model.IndexCount, DrawElementsType.UnsignedInt, 0 );
 	}
 
 	protected enum VoxelizerShaderMode { MODE_BORDER = 1, MODE_CENTER = 2 }

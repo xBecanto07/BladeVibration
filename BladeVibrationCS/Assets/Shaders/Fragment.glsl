@@ -21,6 +21,7 @@ uniform vec3 camPos;
 uniform int MatProps_renderMode[MAX_MATERIALS];
 uniform float MatProps_shininess[MAX_MATERIALS];
 uniform float MatProps_diffuseStrength[MAX_MATERIALS];
+uniform int TestFrontBack;
 
 layout (location = 0) out vec4 FragColor;
 
@@ -39,10 +40,11 @@ vec3 FlatNormal(vec3 pos) {
 }
 
 void main() {
-    if (MatProps_renderMode[matID] == SIMPLE) {
+    int renderMode = (TestFrontBack > 0 && gl_FrontFacing == false) ? OBJECTS : MatProps_renderMode[matID];
+    if (renderMode == SIMPLE) {
         FragColor = color;
 
-    } else if (MatProps_renderMode[matID] == HARD) {
+    } else if (renderMode == HARD) {
         float diffuseStrength = MatProps_diffuseStrength[matID];
 
         vec3 norm = FlatNormal(fragPos);
@@ -55,7 +57,7 @@ void main() {
         color = clamp(color, 0.0, 1.0);
         FragColor = vec4(color, 1.0);
 
-    } else if (MatProps_renderMode[matID] == PHONG) {
+    } else if (renderMode == PHONG) {
         float diffuseStrength = MatProps_diffuseStrength[matID];
         float shininess = MatProps_shininess[matID];
 
@@ -89,7 +91,7 @@ void main() {
 
         FragColor = vec4(color, 1.0);
 
-    } else if (MatProps_renderMode[matID] == OBJECTS) {
+    } else if (renderMode == OBJECTS) {
         // Debugging mode to visualize different meshes by color
         vec3 color = vec3(0.8, 0.8, 0.8);
 
@@ -106,6 +108,14 @@ void main() {
                 float B = (1 + (matID / 16) % 4) / 4;
                 color = vec3(R, G, B); // Unique color
                 break;
+        }
+
+        if (gl_FrontFacing == false) {
+            // Create stripes on backfaces for better visualization based on pixel position (gl_FragCoord)
+            float stripeWidth = 4.0;
+            float stripe = mod(floor(gl_FragCoord.x / stripeWidth) + floor(gl_FragCoord.y / stripeWidth), 2.0);
+            if (stripe < 1.0)
+                color *= 0.4; // Darken color for stripes
         }
 
         vec3 norm = FlatNormal(fragPos);

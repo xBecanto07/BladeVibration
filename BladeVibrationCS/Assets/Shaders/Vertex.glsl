@@ -11,7 +11,7 @@ uniform vec3 offset;
 uniform mat4 model;
 uniform mat4 view;
 uniform mat4 proj;
-uniform float scale;
+uniform vec3 scale;
 uniform int matOffset;
 
 out vec4 color;

@@ -44,8 +44,8 @@ public class RenderController {
 	public void FinishDrawCycle () {
 		while ( nextDrawQueue.Count > 0 )
 			DrawRequests.Enqueue ( nextDrawQueue.Dequeue () );
-		foreach ( var program in programScrapYard )
-			program.Dispose ();
+		//foreach ( var program in programScrapYard )
+		//	program.Dispose ();
 	}
 
 

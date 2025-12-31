@@ -5,6 +5,7 @@ in vec3 fragPos;
 in vec3 fragNormal;
 in vec2 uvCoords;
 in flat int matID;
+in vec3 fragPosOrig;
 
 #define SIMPLE 1
 #define HARD 2
@@ -14,6 +15,7 @@ in flat int matID;
 uniform vec3 specularColor;
 uniform vec3 lightPosMain, lightPosSecond;
 uniform vec3 camPos;
+uniform vec3 MinCutoff, MaxCutoff;
 
 // Per-material properties
 #define MAX_MATERIALS 8
@@ -58,6 +60,11 @@ void main() {
         FragColor = vec4(color, 1.0);
 
     } else if (renderMode == PHONG) {
+        if (fragPosOrig.x < MinCutoff.x || fragPosOrig.y < MinCutoff.y || fragPosOrig.z < MinCutoff.z ||
+            fragPosOrig.x > MaxCutoff.x || fragPosOrig.y > MaxCutoff.y || fragPosOrig.z > MaxCutoff.z) {
+            discard;
+        }
+
         float diffuseStrength = MatProps_diffuseStrength[matID];
         float shininess = MatProps_shininess[matID];
 

@@ -9,6 +9,8 @@ public class BasicMeshRenderer : AShaderProgram {
 
 	public readonly ModelHolder Model;
 	public readonly MaterialHolder MaterialHolder;
+	public Vector3 MinBound = Vector3.One * -1000f;
+	public Vector3 MaxBound = Vector3.One * 1000f;
 
 	public BasicMeshRenderer ( LoadModelRequest loadModelRequest )
 		: base ( true, ("Vertex.glsl", ShaderType.VertexShader)
@@ -35,8 +37,8 @@ public class BasicMeshRenderer : AShaderProgram {
 		MaterialHolder.SetMaterial ( 0, 32f, 0.5f, 0.5f, RENDER_MODE_OBJECTS ); // Scary-zero error material
 		MaterialHolder.SetMaterial ( 6, 16f, 0.3f, 0.8f, RENDER_MODE_HARD ); // Skybox material
 		MaterialHolder.SetMaterial ( 7, 8f, 0.1f, 0.2f, RENDER_MODE_SIMPLE ); // Star material
-		MaterialHolder.SetMaterial ( 1, 64f, 0.2f, 0.9f, RENDER_MODE_PHONG ); // Matte material
-		MaterialHolder.SetMaterial ( 2, 4f, 0.7f, 0.6f, RENDER_MODE_PHONG ); // Shiny material
+		MaterialHolder.SetMaterial ( 1, 128f, 0.2f, 0.9f, RENDER_MODE_PHONG ); // Matte material
+		MaterialHolder.SetMaterial ( 2, 8f, 0.9f, 0.6f, RENDER_MODE_PHONG ); // Shiny material
 		MaterialHolder.UploadToGPU ( Handle );
 	}
 
@@ -47,8 +49,8 @@ public class BasicMeshRenderer : AShaderProgram {
 		SetUniform ( "proj", projection );
 		SetUniform ( "model", Matrix4.Identity );
 
-		SetUniform ( "lightPosMain", 200f, 5000f, 200f );
-		SetUniform ( "lightPosSecond", -2500f, 900f, 150f );
+		SetUniform ( "lightPosMain", 200f, -5000f, 200f );
+		SetUniform ( "lightPosSecond", -2500f, -900f, 150f );
 		//SetUniform ( "lightPosMain", camPos.X, camPos.Y, camPos.Z );
 		//SetUniform ( "lightPosSecond", 0f, 0f, 0f );
 		SetUniform ( "camPos", camPos.X, camPos.Y, camPos.Z );
@@ -60,6 +62,8 @@ public class BasicMeshRenderer : AShaderProgram {
 		SetUniform ( "scale", 4.0f, 4.0f, 4.0f );
 		SetUniform ( "offset", 0, 0, 0 );
 		SetUniform ( "matOffset", 6 );
+		SetUniform ( "MinCutoff", MinBound.X, MinBound.Y, MinBound.Z );
+		SetUniform ( "MaxCutoff", MaxBound.X, MaxBound.Y, MaxBound.Z );
 		RenderController.SkyBoxPrimitive.Render ();
 
 		SetUniform ( "colorA", 1f, 0f, 0f );

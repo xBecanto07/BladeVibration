@@ -46,6 +46,8 @@ public partial class ViewerForm : Form {
 		case BasicMeshRenderer basicMesh:
 			basicMesh.MaterialHolder.Parse ( MaterialEntries );
 			basicMesh.MaterialHolder.UpdateGPU ();
+			basicMesh.MinBound.Parse ( TB_BM_MinCut_X, TB_BM_MinCut_Y, TB_BM_MinCut_Z );
+			basicMesh.MaxBound.Parse ( TB_BM_MaxCut_X, TB_BM_MaxCut_Y, TB_BM_MaxCut_Z );
 			break;
 		case VoxelObject voxelizer:
 			voxelizer.CamPos.Parse ( TB_VO_CamPosX, TB_VO_CamPosY, TB_VO_CamPosZ );
@@ -92,6 +94,8 @@ public partial class ViewerForm : Form {
 			GpuWindow.Camera.ApplyAngle ();
 
 			basicMesh.MaterialHolder.Fill ( MaterialEntries );
+			basicMesh.MinBound.Fill ( TB_BM_MinCut_X, TB_BM_MinCut_Y, TB_BM_MinCut_Z );
+			basicMesh.MaxBound.Fill ( TB_BM_MaxCut_X, TB_BM_MaxCut_Y, TB_BM_MaxCut_Z );
 			break;
 
 		case VoxelObject voxelizer:

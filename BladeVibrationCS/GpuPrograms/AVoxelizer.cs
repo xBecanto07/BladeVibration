@@ -17,45 +17,55 @@ public abstract class AVoxelizer : AShaderProgram {
 	public Vector3 CamDir = Vector3.UnitZ;
 	public Vector2i LastScreenSize;
 
-	public AVoxelizer ( ModelHolder model, float voxelSize, bool startRepeatable, byte border )
+	public readonly Vector3 MinCutoff, MaxCutoff;
+
+	public AVoxelizer ( ModelHolder model, float voxelSize, bool startRepeatable, byte border, Vector3 minCutoff, Vector3 maxCutoff )
 		: base ( startRepeatable //, ("Vertex.glsl", ShaderType.VertexShader)
 			//, ("Fragment.glsl", ShaderType.FragmentShader) ) {
 			, ("VoxelizerVertex.glsl", ShaderType.VertexShader)
 			, ("VoxelizerFragment.glsl", ShaderType.FragmentShader) ) {
 		Model = model;
+		MinCutoff = minCutoff;
+		MaxCutoff = maxCutoff;
 		VoxelSize = voxelSize;
-		BasePosition = new Vector3 ( model.MinX, model.MinY, model.MinZ );
-		Size = new Vector3 ( model.MaxX - model.MinX, model.MaxY - model.MinY, model.MaxZ - model.MinZ );
+		BasePosition = new Vector3 ( MinCutoff.X, MinCutoff.Y, MinCutoff.Z );
+		Size = new Vector3 ( MaxCutoff.X - MinCutoff.X, MaxCutoff.Y - MinCutoff.Y, MaxCutoff.Z - MinCutoff.Z );
 
 		VoxX = (int)Math.Ceiling ( Size.X / VoxelSize ) + border;
 		VoxY = (int)Math.Ceiling ( Size.Y / VoxelSize ) + border;
 		VoxZ = (int)Math.Ceiling ( Size.Z / VoxelSize ) + border;
 
-		//PrepareBuffer ();
+		PrepareBuffer ();
 
 		view = Matrix4.LookAt ( CamPos, CamPos + CamDir, Vector3.UnitY );
 		LastProjectionOrto.Row0 = new Vector2 ( BasePosition.X, BasePosition.X + Size.X );
 		LastProjectionOrto.Row1 = new Vector2 ( BasePosition.Y, BasePosition.Y + Size.Y );
-		LastProjectionOrto.Row2 = new Vector2 ( Model.MinZ, Model.MaxZ );
+		LastProjectionOrto.Row2 = new Vector2 ( MinCutoff.Z, MaxCutoff.Z );
 	}
 
 	private void PrepareBuffer () {
 		// Create and bind the buffer for 3D texture with material description
 		MaterialTextureID = GL.GenTexture ();
 		GL.BindTexture ( TextureTarget.Texture3D, MaterialTextureID );
+
 		GL.TexImage3D ( TextureTarget.Texture3D, 0, PixelInternalFormat.Rgba32f,
 			VoxX, VoxY, VoxZ, 0,
 			PixelFormat.Rgba, PixelType.Float, nint.Zero );
-		GL.TexParameter ( TextureTarget.Texture3D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear );
-		GL.TexParameter ( TextureTarget.Texture3D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear );
+		GL.TexParameter ( TextureTarget.Texture3D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest );
+		GL.TexParameter ( TextureTarget.Texture3D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest );
+		GL.TexParameter ( TextureTarget.Texture3D, TextureParameterName.TextureBaseLevel, 0 );
+		GL.TexParameter ( TextureTarget.Texture3D, TextureParameterName.TextureMaxLevel, 0 );
 		GL.TexParameter ( TextureTarget.Texture3D, TextureParameterName.TextureWrapS, (int)TextureWrapMode.ClampToEdge );
+		GL.TexParameter ( TextureTarget.Texture3D, TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge );
+		GL.TexParameter ( TextureTarget.Texture3D, TextureParameterName.TextureWrapR, (int)TextureWrapMode.ClampToEdge );
 		GL.BindTexture ( TextureTarget.Texture3D, 0 ); // Unbind
 	}
 
 
 
-	protected override void DisposeInner () {
+	protected override sealed void DisposeInner () {
 		GL.DeleteTexture ( MaterialTextureID );
+		EntryProgram.StdOut ( "Voxelizer disposed." );
 	}
 
 
@@ -73,7 +83,7 @@ public abstract class AVoxelizer : AShaderProgram {
 			return Matrix4.CreateOrthographicOffCenter (
 				BasePosition.X, BasePosition.X + Size.X,
 				BasePosition.Y, BasePosition.Y + Size.Y,
-				Model.MinZ, Model.MinZ + z * VoxelSize );
+				MinCutoff.X, MinCutoff.Z + z * VoxelSize );
 
 		case ProjectionType.Perspective:
 			return Matrix4.CreatePerspectiveFieldOfView (
@@ -90,10 +100,12 @@ public abstract class AVoxelizer : AShaderProgram {
 	//	prepFrameBuffer ();
 
 	protected void Pass0_BackgroundClear () {
-		float ratio = (Model.MaxZ - Model.MinZ) / (Model.MaxX - Model.MinX);
-		SetupNormalRendering ( LastScreenSize.X, (int)(LastScreenSize.X * ratio) );
+		float ratio = (MaxCutoff.Z - MinCutoff.Z) / (MaxCutoff.X - MinCutoff.X);
+		GL.DepthFunc ( DepthFunction.Less );
+		GL.Viewport ( 0, 0, VoxX / 4, VoxZ / 4 );
+		GL.CullFace ( TriangleFace.FrontAndBack );
 		SetUniform ( "RENDER_MODE", 3 );
-		Vector3 center = new Vector3 ( Model.MinX + Model.MaxX, Model.MinY + Model.MaxY, Model.MinZ + Model.MaxZ ) * 0.5f;
+		Vector3 center = new Vector3 ( MinCutoff.X + MaxCutoff.X, MinCutoff.Y + MaxCutoff.Y, MinCutoff.Z + MaxCutoff.Z ) * 0.5f;
 		SetUniform ( "scale", 8.0f, 0.2f, 8.0f );
 		SetUniform ( "offset", center.X, center.Y, center.Z );
 		GL.Enable ( EnableCap.DepthTest );
@@ -150,10 +162,10 @@ public abstract class AVoxelizer : AShaderProgram {
 		SetUniform ( "proj", ProjectionMatrix ( z ) );
 
 		SetUniform ( "ActMode", (int)mode );
-		SetUniform ( "zPlaneStart", Model.MinZ + z * VoxelSize );
-		SetUniform ( "zPlaneEnd", Model.MinZ + (z + 1) * VoxelSize );
-		SetUniform ( "modelMin", Model.MinX, Model.MinY, Model.MinZ );
-		SetUniform ( "modelMax", Model.MaxX, Model.MaxY, Model.MaxZ );
+		SetUniform ( "zPlaneStart", MinCutoff.Z + z * VoxelSize );
+		SetUniform ( "zPlaneEnd", MinCutoff.Z + (z + 1) * VoxelSize );
+		SetUniform ( "modelMin", MinCutoff.X, MinCutoff.Y, MinCutoff.Z );
+		SetUniform ( "modelMax", MaxCutoff.X, MaxCutoff.Y, MaxCutoff.Z );
 		SetUniform ( "youngsModulus", ModelHolder.YM_Steel );
 	}
 }

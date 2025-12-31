@@ -18,10 +18,12 @@ out vec4 color;
 out vec3 fragPos;
 out vec3 fragNormal;
 out vec2 uvCoords;
+out vec3 fragPosOrig;
 
 out flat int matID;
 
 void main() {
+    fragPosOrig = aPos;
     matID = int(aMatID + 0.4) + matOffset;
 
     vec4 tmp = model * vec4(aPos * scale + offset, 1.0);

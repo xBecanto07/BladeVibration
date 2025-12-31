@@ -27,6 +27,7 @@ public class WindowsHolder : GameWindow {
 	public readonly Controler controler;
 	public readonly RenderController renderController;
 	public readonly Camera Camera = new ( new ( -0.5f, 0.6f, -0.6f ), new ( 0.9f, 0.5f ) );
+	double lastTime = 0.0;
 
 	public const string TITLE = "Blade Vibration C#";
 	public WindowsHolder ( Controler control, int width, int height ) : base ( GameWindowSettings.Default, new NativeWindowSettings () { ClientSize = (width, height), Title = TITLE } ) {
@@ -80,7 +81,11 @@ public class WindowsHolder : GameWindow {
 		SwapBuffers ();
 		renderController.FinishDrawCycle ();
 
-		System.Threading.Thread.Sleep ( 1000 / 60 );
+		double nowTime = GLFW.GetTime ();
+		double deltaTime = nowTime - lastTime;
+		lastTime = nowTime;
+		double waitTime = Math.Max ( 0.0, (1.0 / 60.0) - deltaTime );
+		System.Threading.Thread.Sleep ( TimeSpan.FromSeconds ( waitTime ) );
 	}
 
 

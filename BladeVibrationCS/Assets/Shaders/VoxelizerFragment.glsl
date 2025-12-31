@@ -4,14 +4,19 @@ in flat int matID;
 in float matIDf;
 
 layout(location = 0) out vec4 outProperties;
+layout(rgba32f, binding = 0) uniform image3D voxelTex;
 #define MAX_MATERIALS 8
 
 uniform float MatProps_stiffness[MAX_MATERIALS];
 uniform float boundRadius;
 uniform float Y;
+uniform int Yi;
 uniform int RENDER_MODE;
 uniform vec2 screenSize;
 uniform float DefaultStiffness;
+uniform vec3 minBound, boundSize;
+//uniform float voxelSize;
+uniform vec3 voxelCounts;
 
 void main() {
 	// We can't be rendering simply one plane as we want to get the stiffness per-material
@@ -39,8 +44,11 @@ void main() {
 		outProperties = vec4(stiffness, modelID, depth, 1.0);
 
 	} else if (RENDER_MODE == 3) { // Height visualization
-		float depthVis = gl_FragCoord.x < (0.5 * screenSize.x) ? Y : depth;
-		outProperties = vec4(0.0, modelID, depthVis, 1.0);
+		vec3 posVis = vec3 (
+			gl_FragCoord.x < (0.5 * screenSize.x) ? fragPos.x : 0.0,
+			gl_FragCoord.x < (0.5 * screenSize.x) ? Y : depth,
+			gl_FragCoord.x < (0.5 * screenSize.x) ? fragPos.z : modelID );
+		outProperties = vec4(posVis, 1.0);
 
 	} else {
 		float R = 0.5 + 0.5 * sin(fragPos.x);
@@ -48,4 +56,11 @@ void main() {
 		float B = 0.5 + 0.5 * sin(fragPos.z);
 		outProperties = vec4(R, G, B, 1.0);
 	}
+
+	vec3 coordF = fragPos;
+	coordF *= voxelCounts;
+	ivec3 coord = ivec3(coordF);
+	coord.y = Yi;
+
+	imageStore(voxelTex, coord, outProperties);
 }

@@ -52,7 +52,7 @@ public class Star : APrimitive {
 }
 
 public class Plane : APrimitive {
-	public const float QuadSide = 999f;
+	public const float QuadSide = 99f;
 	public const float QuadBase = -QuadSide / 2;
 	public const float QuadTop = QuadBase + QuadSide;
 	public readonly static float[] planeVertices = {
@@ -62,8 +62,8 @@ public class Plane : APrimitive {
 			QuadBase,  QuadBase, 0,	 1, 0, 0,  0, 0,  DEF_MAT_ID,
 			};
 	public readonly static int[] planeIndices = {
-			0, 1, 2,   1, 2, 0,
-			2, 3, 0,   3, 0, 2,
+			0, 1, 2,//   1, 2, 0,
+			2, 3, 0,//   3, 0, 2,
 			};
 
 	public Plane () : base ( planeVertices, planeIndices ) { }

@@ -87,6 +87,14 @@
 			BTN_Pause = new Button ();
 			BTN_Apply = new Button ();
 			LBL_StatusMsg = new Label ();
+			TB_BM_MinCut_Z = new TextBox ();
+			TB_BM_MinCut_Y = new TextBox ();
+			TB_BM_MinCut_X = new TextBox ();
+			label15 = new Label ();
+			label19 = new Label ();
+			TB_BM_MaxCut_X = new TextBox ();
+			TB_BM_MaxCut_Y = new TextBox ();
+			TB_BM_MaxCut_Z = new TextBox ();
 			ShaderSelector.SuspendLayout ();
 			tabPage1.SuspendLayout ();
 			tabPage2.SuspendLayout ();
@@ -153,6 +161,14 @@
 			// 
 			// tabPage2
 			// 
+			tabPage2.Controls.Add ( TB_BM_MaxCut_Z );
+			tabPage2.Controls.Add ( TB_BM_MinCut_Z );
+			tabPage2.Controls.Add ( TB_BM_MaxCut_Y );
+			tabPage2.Controls.Add ( TB_BM_MinCut_Y );
+			tabPage2.Controls.Add ( TB_BM_MaxCut_X );
+			tabPage2.Controls.Add ( label19 );
+			tabPage2.Controls.Add ( TB_BM_MinCut_X );
+			tabPage2.Controls.Add ( label15 );
 			tabPage2.Controls.Add ( GB_BM_Materials );
 			tabPage2.Controls.Add ( TB_BM_CamRotY );
 			tabPage2.Controls.Add ( TB_BM_CamRotX );
@@ -677,6 +693,68 @@
 			LBL_StatusMsg.TabIndex = 2;
 			LBL_StatusMsg.Text = "Status Message";
 			// 
+			// TB_BM_MinCut_Z
+			// 
+			TB_BM_MinCut_Z.Location = new Point ( 310, 165 );
+			TB_BM_MinCut_Z.Name = "TB_BM_MinCut_Z";
+			TB_BM_MinCut_Z.Size = new Size ( 82, 23 );
+			TB_BM_MinCut_Z.TabIndex = 17;
+			// 
+			// TB_BM_MinCut_Y
+			// 
+			TB_BM_MinCut_Y.Location = new Point ( 222, 165 );
+			TB_BM_MinCut_Y.Name = "TB_BM_MinCut_Y";
+			TB_BM_MinCut_Y.Size = new Size ( 82, 23 );
+			TB_BM_MinCut_Y.TabIndex = 16;
+			// 
+			// TB_BM_MinCut_X
+			// 
+			TB_BM_MinCut_X.Location = new Point ( 134, 165 );
+			TB_BM_MinCut_X.Name = "TB_BM_MinCut_X";
+			TB_BM_MinCut_X.Size = new Size ( 82, 23 );
+			TB_BM_MinCut_X.TabIndex = 15;
+			// 
+			// label15
+			// 
+			label15.AutoSize = true;
+			label15.Location = new Point ( 28, 168 );
+			label15.Name = "label15";
+			label15.Size = new Size ( 100, 15 );
+			label15.TabIndex = 14;
+			label15.Text = "Minimum Cutoff:";
+			label15.TextAlign = ContentAlignment.TopRight;
+			// 
+			// label19
+			// 
+			label19.AutoSize = true;
+			label19.Location = new Point ( 28, 197 );
+			label19.Name = "label19";
+			label19.Size = new Size ( 101, 15 );
+			label19.TabIndex = 14;
+			label19.Text = "Maximum Cutoff:";
+			label19.TextAlign = ContentAlignment.TopRight;
+			// 
+			// TB_BM_MaxCut_X
+			// 
+			TB_BM_MaxCut_X.Location = new Point ( 134, 194 );
+			TB_BM_MaxCut_X.Name = "TB_BM_MaxCut_X";
+			TB_BM_MaxCut_X.Size = new Size ( 82, 23 );
+			TB_BM_MaxCut_X.TabIndex = 15;
+			// 
+			// TB_BM_MaxCut_Y
+			// 
+			TB_BM_MaxCut_Y.Location = new Point ( 222, 194 );
+			TB_BM_MaxCut_Y.Name = "TB_BM_MaxCut_Y";
+			TB_BM_MaxCut_Y.Size = new Size ( 82, 23 );
+			TB_BM_MaxCut_Y.TabIndex = 16;
+			// 
+			// TB_BM_MaxCut_Z
+			// 
+			TB_BM_MaxCut_Z.Location = new Point ( 310, 194 );
+			TB_BM_MaxCut_Z.Name = "TB_BM_MaxCut_Z";
+			TB_BM_MaxCut_Z.Size = new Size ( 82, 23 );
+			TB_BM_MaxCut_Z.TabIndex = 17;
+			// 
 			// ViewerForm
 			// 
 			AutoScaleDimensions = new SizeF ( 7F, 15F );
@@ -769,6 +847,14 @@
 		private Label label17;
 		private Label label16;
 		private MaterialInfo[] MaterialEntries;
+		private TextBox TB_BM_MaxCut_Z;
+		private TextBox TB_BM_MinCut_Z;
+		private TextBox TB_BM_MaxCut_Y;
+		private TextBox TB_BM_MinCut_Y;
+		private TextBox TB_BM_MaxCut_X;
+		private Label label19;
+		private TextBox TB_BM_MinCut_X;
+		private Label label15;
 	}
 
 	public struct MaterialInfo {

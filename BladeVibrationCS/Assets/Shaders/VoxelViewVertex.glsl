@@ -4,6 +4,7 @@ uniform mat4 model;
 uniform mat4 view;
 uniform mat4 proj;
 uniform vec3 TextureMin, TextureSize;
+uniform float scale;
 //out vec3 fragPos;
 out vec3 fragPosNorm;
 
@@ -12,6 +13,5 @@ void main() {
     gl_Position = proj * view * tmp;
     //fragPos = vec3(tmp);
     fragPosNorm = (vec3(tmp) - TextureMin) / TextureSize;
-    //fragPosNorm *= 8.0;
-    //fragPosNorm = vec3(tmp);
+    fragPosNorm *= scale;
 }

@@ -7,7 +7,8 @@ using PixelForm = SixLabors.ImageSharp.PixelFormats;
 
 namespace BladeVibrationCS.GpuPrograms;
 public abstract class AVoxelizer : AShaderProgram {
-	public int MaterialTextureID { get; protected set; }
+	public readonly int MaterialTextureID;
+	public readonly int ExtrasTextureID;
 	public readonly Vector3 BasePosition, Size;
 	public readonly float VoxelSize = 0.01f;
 	protected readonly ModelHolder Model;
@@ -35,7 +36,8 @@ public abstract class AVoxelizer : AShaderProgram {
 		VoxY = (int)Math.Ceiling ( Size.Y / VoxelSize ) + border;
 		VoxZ = (int)Math.Ceiling ( Size.Z / VoxelSize ) + border;
 
-		PrepareBuffer ();
+		MaterialTextureID = PrepareBuffer ();
+		ExtrasTextureID = PrepareBuffer ();
 
 		view = Matrix4.LookAt ( CamPos, CamPos + CamDir, Vector3.UnitY );
 		LastProjectionOrto.Row0 = new Vector2 ( BasePosition.X, BasePosition.X + Size.X );
@@ -43,10 +45,10 @@ public abstract class AVoxelizer : AShaderProgram {
 		LastProjectionOrto.Row2 = new Vector2 ( MinCutoff.Z, MaxCutoff.Z );
 	}
 
-	private void PrepareBuffer () {
+	private int PrepareBuffer () {
 		// Create and bind the buffer for 3D texture with material description
-		MaterialTextureID = GL.GenTexture ();
-		GL.BindTexture ( TextureTarget.Texture3D, MaterialTextureID );
+		int ret = GL.GenTexture ();
+		GL.BindTexture ( TextureTarget.Texture3D, ret );
 
 		GL.TexImage3D ( TextureTarget.Texture3D, 0, PixelInternalFormat.Rgba32f,
 			VoxX, VoxY, VoxZ, 0,
@@ -58,7 +60,9 @@ public abstract class AVoxelizer : AShaderProgram {
 		GL.TexParameter ( TextureTarget.Texture3D, TextureParameterName.TextureWrapS, (int)TextureWrapMode.ClampToEdge );
 		GL.TexParameter ( TextureTarget.Texture3D, TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge );
 		GL.TexParameter ( TextureTarget.Texture3D, TextureParameterName.TextureWrapR, (int)TextureWrapMode.ClampToEdge );
+
 		GL.BindTexture ( TextureTarget.Texture3D, 0 ); // Unbind
+		return ret;
 	}
 
 
@@ -99,24 +103,25 @@ public abstract class AVoxelizer : AShaderProgram {
 	//	ArgumentNullException.ThrowIfNull ( prepFrameBuffer );
 	//	prepFrameBuffer ();
 
-	protected void Pass0_BackgroundClear () {
+	protected const int PARTS = 3;
+
+	protected void Pass0_BackgroundClear ( int partX ) {
 		float ratio = (MaxCutoff.Z - MinCutoff.Z) / (MaxCutoff.X - MinCutoff.X);
 		GL.DepthFunc ( DepthFunction.Less );
-		GL.Viewport ( 0, 0, VoxX / 4, VoxZ / 4 );
-		GL.CullFace ( TriangleFace.FrontAndBack );
+		GL.Viewport ( 0, partX * (4 + VoxZ), VoxX / PARTS, VoxZ );
+		GL.Disable ( EnableCap.CullFace );
+		//SetUniform ( "voxelCounts", VoxX, VoxY, VoxZ );
+		SetUniform ( "fragOffset", partX * (VoxX / PARTS), 0, -partX * (4 + VoxZ) );
 		SetUniform ( "RENDER_MODE", 3 );
-		Vector3 center = new Vector3 ( MinCutoff.X + MaxCutoff.X, MinCutoff.Y + MaxCutoff.Y, MinCutoff.Z + MaxCutoff.Z ) * 0.5f;
-		SetUniform ( "scale", 8.0f, 0.2f, 8.0f );
-		SetUniform ( "offset", center.X, center.Y, center.Z );
 		GL.Enable ( EnableCap.DepthTest );
 		GL.Disable ( EnableCap.StencilTest );
 		GL.StencilFunc ( StencilFunction.Always, 0, 0xff );
 		GL.StencilOp ( StencilOp.Keep, StencilOp.Keep, StencilOp.Keep );
 		GL.DepthMask ( true );
 		GL.ColorMask ( true, true, true, true );
-		GL.ClearColor ( 0f, 0f, 0f, 0f );
-		GL.Clear ( ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit );
-		RenderController.SkyBoxPrimitive.Render ();
+		GL.ClearColor ( 0.4f, 0.4f, 0f, 1f );
+		//GL.Clear ( ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit );
+		RenderPlane ();
 	}
 
 	protected void Pass1_StencilInput () {
@@ -134,7 +139,7 @@ public abstract class AVoxelizer : AShaderProgram {
 
 		//SetProgramUniforms ( z, VoxelizerShaderMode.MODE_CENTER );
 		GL.BindVertexArray ( Model.VAO );
-		SetUniform ( "RENDER_MODE", 1 );
+		SetUniform ( "RENDER_MODE", 4 );
 		SetUniform ( "scale", 1.0f, 1.0f, 1.0f );
 		SetUniform ( "offset", 0.0f, 0.0f, 0.0f );
 		GL.DrawElements ( PrimitiveType.Triangles, Model.IndexCount, DrawElementsType.UnsignedInt, 0 );
@@ -149,10 +154,27 @@ public abstract class AVoxelizer : AShaderProgram {
 															  // Set up orthographic projection and view matrix for slicing
 															  //   Use the near plane to slice for current Z index
 
-		GL.BindVertexArray ( Model.VAO );
-		SetUniform ( "scale", 1.0f, 1.0f, 1.0f );
+		//SetUniform ( "scale", 1.0f, 1.0f, 1.0f );
 		SetUniform ( "offset", 0.0f, 0.0f, 0.0f );
-		GL.DrawElements ( PrimitiveType.Triangles, Model.IndexCount, DrawElementsType.UnsignedInt, 0 );
+		SetUniform ( "matOffset", 0 );
+		SetUniform ( "RENDER_MODE", 1 );
+		GL.Disable ( EnableCap.CullFace );
+		//GL.BindVertexArray ( Model.VAO );
+		//GL.DrawElements ( PrimitiveType.Triangles, Model.IndexCount, DrawElementsType.UnsignedInt, 0 );
+		RenderPlane ();
+
+		// Draw skybox to mark empty space
+		//GL.StencilFunc ( StencilFunction.Notequal, 1, 0xff );
+		//SetUniform ( "matOffset", 3 );
+		//SetUniform ( "scale", 100.0f, 1.0f, 10.0f );
+		//RenderController.SkyBoxPrimitive.Render ();
+	}
+
+	private void RenderPlane () {
+		Vector3 center = new Vector3 ( MinCutoff.X + MaxCutoff.X, MinCutoff.Y + MaxCutoff.Y, MinCutoff.Z + MaxCutoff.Z ) * 0.5f;
+		SetUniform ( "scale", 8.0f, 0.2f, 8.0f );
+		SetUniform ( "offset", center.X, center.Y, center.Z );
+		RenderController.SkyBoxPrimitive.Render ();
 	}
 
 	protected enum VoxelizerShaderMode { MODE_BORDER = 1, MODE_CENTER = 2 }

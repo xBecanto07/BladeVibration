@@ -64,6 +64,10 @@ public partial class ViewerForm : Form {
 				voxelizer.CurrentProjMode = AVoxelizer.ProjectionType.Orthographic;
 			}
 			break;
+		case VoxelVisualizer voxelView:
+			voxelView.ShouldTransform.Parse ( CB_VV_Transform );
+			voxelView.Scale.Parse ( TB_VV_Scale );
+			break;
 		}
 	}
 
@@ -126,6 +130,10 @@ public partial class ViewerForm : Form {
 				RB_PM_Persp.Checked = true;
 				break;
 			}
+			break;
+		case VoxelVisualizer voxelView:
+			voxelView.ShouldTransform.Fill ( CB_VV_Transform );
+			voxelView.Scale.Fill ( TB_VV_Scale );
 			break;
 		}
 

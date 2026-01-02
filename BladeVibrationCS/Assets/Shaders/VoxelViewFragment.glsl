@@ -2,10 +2,28 @@
 //in vec3 fragPos;
 in vec3 fragPosNorm;
 layout(binding = 0) uniform sampler3D voxelTexture;
-//layout(rgba32f, binding = 1) uniform image3D voxelTex;
+layout(binding = 1) uniform sampler3D extrasTexture;
 layout (location = 0) out vec4 FragColor;
+uniform int renderMode;
 
 void main() {
+    if (renderMode == 0) {
+        FragColor = vec4(
+            0.5 + 0.5 * sin(fragPosNorm.x),
+            0.5 + 0.5 * sin(fragPosNorm.y),
+            0.5 + 0.5 * sin(fragPosNorm.z),
+            1.0);
+        return;
+    }
+    if (renderMode == 3) {
+        FragColor = vec4(
+            1.0 - fragPosNorm.x,
+            1.0 - fragPosNorm.y,
+            1.0 - fragPosNorm.z,
+            1.0);
+        return;
+    }
+
     FragColor = vec4(fragPosNorm, 1.0);
     if (fragPosNorm.x <= -0.1 || fragPosNorm.x >= 1.1 ||
         fragPosNorm.y <= -0.1 || fragPosNorm.y >= 1.1 ||
@@ -25,9 +43,21 @@ void main() {
         FragColor = mix(FragColor, vec4(0.1, 0.6, 0.0, 1.0) * d, 0.2);
 
     } else {
-        FragColor = texture(voxelTexture, fragPosNorm.xzy);
-        if (FragColor.a < 0.9) {
+        vec4 data = texture(voxelTexture, fragPosNorm.xzy);
+        vec4 extra = texture(extrasTexture, fragPosNorm.xzy);
+        if (extra.w < 0.9) {
             FragColor = vec4(fragPosNorm, 1.0);
+        } else {
+            if (renderMode == 1) {
+                FragColor = vec4(
+                    //log2(data.w / 1e9 + 1.0) / 10.0,
+                    extra.w,
+                    (extra.x / 255.0) * 10.0, // Model ID * 10 for visibility
+                    data.y, // Y-depth
+                    1.0);
+            } else {
+                FragColor = data;
+            }
         }
     }
 }

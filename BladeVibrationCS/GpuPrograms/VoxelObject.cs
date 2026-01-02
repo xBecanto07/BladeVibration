@@ -8,11 +8,11 @@ using PixelForm = SixLabors.ImageSharp.PixelFormats;
 namespace BladeVibrationCS.GpuPrograms;
 public class VoxelObject : AVoxelizer {
 	MaterialHolder MaterialHolder;
-	public const int MAX_VOXELS_PER_AXIS = 4096;
+	public const int MAX_VOXELS_PER_AXIS = 2048;
 	public override (int R, int G, int B) BackgroundColor => (BACKGROUND_HIGH, BACKGROUND_LOW, BACKGROUND_MIN); // Gold
 	public float CurrentLayer = 0;
 
-	const byte BorderSize = 2;
+	const byte BorderSize = 0;
 	public VoxelObject ( ModelHolder model, float voxelSize )
 		: base ( model, voxelSize, true, BorderSize
 		, new ( 2.5f, -1.3f, -4f )
@@ -23,6 +23,7 @@ public class VoxelObject : AVoxelizer {
 		MaterialHolder.SetMaterial ( 0, 32f, 0.5f, ModelHolder.YM_Air, RENDER_MODE_OBJECTS ); // Scary-zero error material
 		MaterialHolder.SetMaterial ( 1, 64f, 0.2f, ModelHolder.YM_Wood, RENDER_MODE_PHONG ); // Matte material
 		MaterialHolder.SetMaterial ( 2, 4f, 0.7f, ModelHolder.YM_Steel, RENDER_MODE_PHONG ); // Shiny material
+		MaterialHolder.SetMaterial ( 3, 4f, 0.7f, ModelHolder.YM_Air, RENDER_MODE_PHONG ); // Outside air material
 		MaterialHolder.UploadToGPU ( Handle );
 
 		//float maxDim = Math.Max ( Math.Max ( MaxCutoff.X - MinCutoff.X, MaxCutoff.Y - MinCutoff.Y ), MaxCutoff.Z - MinCutoff.Z );
@@ -43,15 +44,8 @@ public class VoxelObject : AVoxelizer {
 		SetUniform ( "DefaultStiffness", 1 );
 
 		//SetUniform ( "proj", ProjectionMatrix ( 150 ) );
-		Matrix4 ortoProj = Matrix4.CreateOrthographicOffCenter (
-			MinCutoff.X, MaxCutoff.X,
-			MinCutoff.Z, MaxCutoff.Z,
-			//0.99f * VoxelSize, 2 * (MaxCutoff.Y - MinCutoff.Y)
-			0.99f * VoxelSize, 150f
-			);
 		//float aspectRatio = (MaxCutoff.X - MinCutoff.X) / (MaxCutoff.Z - MinCutoff.Z);
 		SetUniform ( "screenSize", LastScreenSize.X, LastScreenSize.Y );
-		SetUniform ( "proj", ortoProj );
 		SetUniform ( "model", Matrix4.Identity );
 		float maxX = MaxCutoff.X - MinCutoff.X;
 		float maxZ = MaxCutoff.Z - MinCutoff.Z;
@@ -62,14 +56,25 @@ public class VoxelObject : AVoxelizer {
 		SetUniform ( "Yi", (int)CurrentLayer );
 		SetUniform ( "minBound", MinCutoff.X, MinCutoff.Y, MinCutoff.Z );
 		SetUniform ( "boundSize", MaxCutoff.X - MinCutoff.X, MaxCutoff.Y - MinCutoff.Y, MaxCutoff.Z - MinCutoff.Z );
-		SetUniform ( "voxelCounts", VoxX, VoxY, VoxZ );
-		//SetUniform ( "voxelSize", VoxelSize );
+		SetUniform ( "voxelSize", VoxelSize );
 
 		GL.BindImageTexture ( 0, MaterialTextureID, 0, true, 0, TextureAccess.WriteOnly, SizedInternalFormat.Rgba32f );
+		GL.BindImageTexture ( 1, ExtrasTextureID, 0, true, 0, TextureAccess.WriteOnly, SizedInternalFormat.Rgba32f );
 
-		Pass0_BackgroundClear ();
-		Pass1_StencilInput ();
-		Pass2_StencilTest ();
+		float Xstep = (MaxCutoff.X - MinCutoff.X) / PARTS;
+		for ( int x = 0; x < PARTS; x++ ) {
+		//for ( int x = 0; x < 1; x++ ) {
+			Matrix4 ortoProj = Matrix4.CreateOrthographicOffCenter (
+				MinCutoff.X + x * Xstep, MinCutoff.X + (x + 1) * Xstep,
+				MinCutoff.Z, MaxCutoff.Z,
+				//0.99f * VoxelSize, 2 * (MaxCutoff.Y - MinCutoff.Y)
+				0.5f * VoxelSize, 150f
+				);
+			SetUniform ( "proj", ortoProj );
+			Pass0_BackgroundClear ( x );
+			Pass1_StencilInput ();
+			Pass2_StencilTest ();
+		}
 
 		GL.MemoryBarrier ( MemoryBarrierFlags.ShaderImageAccessBarrierBit );
 

@@ -31,6 +31,14 @@
 			TB_OV_WinPosX = new TextBox ();
 			label7 = new Label ();
 			tabPage2 = new TabPage ();
+			TB_BM_MaxCut_Z = new TextBox ();
+			TB_BM_MinCut_Z = new TextBox ();
+			TB_BM_MaxCut_Y = new TextBox ();
+			TB_BM_MinCut_Y = new TextBox ();
+			TB_BM_MaxCut_X = new TextBox ();
+			label19 = new Label ();
+			TB_BM_MinCut_X = new TextBox ();
+			label15 = new Label ();
 			GB_BM_Materials = new GroupBox ();
 			label18 = new Label ();
 			label17 = new Label ();
@@ -87,20 +95,17 @@
 			BTN_Pause = new Button ();
 			BTN_Apply = new Button ();
 			LBL_StatusMsg = new Label ();
-			TB_BM_MinCut_Z = new TextBox ();
-			TB_BM_MinCut_Y = new TextBox ();
-			TB_BM_MinCut_X = new TextBox ();
-			label15 = new Label ();
-			label19 = new Label ();
-			TB_BM_MaxCut_X = new TextBox ();
-			TB_BM_MaxCut_Y = new TextBox ();
-			TB_BM_MaxCut_Z = new TextBox ();
+			TB_VV_Scale = new TextBox ();
+			label20 = new Label ();
+			label21 = new Label ();
+			CB_VV_Transform = new CheckBox ();
 			ShaderSelector.SuspendLayout ();
 			tabPage1.SuspendLayout ();
 			tabPage2.SuspendLayout ();
 			GB_BM_Materials.SuspendLayout ();
 			tabPage3.SuspendLayout ();
 			GB_ProjMode.SuspendLayout ();
+			tabPage4.SuspendLayout ();
 			SuspendLayout ();
 			// 
 			// UpdateTimer
@@ -190,6 +195,68 @@
 			tabPage2.TabIndex = 1;
 			tabPage2.Text = "BasicMesh";
 			tabPage2.UseVisualStyleBackColor = true;
+			// 
+			// TB_BM_MaxCut_Z
+			// 
+			TB_BM_MaxCut_Z.Location = new Point ( 310, 194 );
+			TB_BM_MaxCut_Z.Name = "TB_BM_MaxCut_Z";
+			TB_BM_MaxCut_Z.Size = new Size ( 82, 23 );
+			TB_BM_MaxCut_Z.TabIndex = 17;
+			// 
+			// TB_BM_MinCut_Z
+			// 
+			TB_BM_MinCut_Z.Location = new Point ( 310, 165 );
+			TB_BM_MinCut_Z.Name = "TB_BM_MinCut_Z";
+			TB_BM_MinCut_Z.Size = new Size ( 82, 23 );
+			TB_BM_MinCut_Z.TabIndex = 17;
+			// 
+			// TB_BM_MaxCut_Y
+			// 
+			TB_BM_MaxCut_Y.Location = new Point ( 222, 194 );
+			TB_BM_MaxCut_Y.Name = "TB_BM_MaxCut_Y";
+			TB_BM_MaxCut_Y.Size = new Size ( 82, 23 );
+			TB_BM_MaxCut_Y.TabIndex = 16;
+			// 
+			// TB_BM_MinCut_Y
+			// 
+			TB_BM_MinCut_Y.Location = new Point ( 222, 165 );
+			TB_BM_MinCut_Y.Name = "TB_BM_MinCut_Y";
+			TB_BM_MinCut_Y.Size = new Size ( 82, 23 );
+			TB_BM_MinCut_Y.TabIndex = 16;
+			// 
+			// TB_BM_MaxCut_X
+			// 
+			TB_BM_MaxCut_X.Location = new Point ( 134, 194 );
+			TB_BM_MaxCut_X.Name = "TB_BM_MaxCut_X";
+			TB_BM_MaxCut_X.Size = new Size ( 82, 23 );
+			TB_BM_MaxCut_X.TabIndex = 15;
+			// 
+			// label19
+			// 
+			label19.AutoSize = true;
+			label19.Location = new Point ( 28, 197 );
+			label19.Name = "label19";
+			label19.Size = new Size ( 101, 15 );
+			label19.TabIndex = 14;
+			label19.Text = "Maximum Cutoff:";
+			label19.TextAlign = ContentAlignment.TopRight;
+			// 
+			// TB_BM_MinCut_X
+			// 
+			TB_BM_MinCut_X.Location = new Point ( 134, 165 );
+			TB_BM_MinCut_X.Name = "TB_BM_MinCut_X";
+			TB_BM_MinCut_X.Size = new Size ( 82, 23 );
+			TB_BM_MinCut_X.TabIndex = 15;
+			// 
+			// label15
+			// 
+			label15.AutoSize = true;
+			label15.Location = new Point ( 28, 168 );
+			label15.Name = "label15";
+			label15.Size = new Size ( 100, 15 );
+			label15.TabIndex = 14;
+			label15.Text = "Minimum Cutoff:";
+			label15.TextAlign = ContentAlignment.TopRight;
 			// 
 			// GB_BM_Materials
 			// 
@@ -654,6 +721,10 @@
 			// 
 			// tabPage4
 			// 
+			tabPage4.Controls.Add ( CB_VV_Transform );
+			tabPage4.Controls.Add ( label21 );
+			tabPage4.Controls.Add ( TB_VV_Scale );
+			tabPage4.Controls.Add ( label20 );
 			tabPage4.Location = new Point ( 4, 24 );
 			tabPage4.Name = "tabPage4";
 			tabPage4.Size = new Size ( 406, 781 );
@@ -693,67 +764,42 @@
 			LBL_StatusMsg.TabIndex = 2;
 			LBL_StatusMsg.Text = "Status Message";
 			// 
-			// TB_BM_MinCut_Z
+			// TB_VV_Scale
 			// 
-			TB_BM_MinCut_Z.Location = new Point ( 310, 165 );
-			TB_BM_MinCut_Z.Name = "TB_BM_MinCut_Z";
-			TB_BM_MinCut_Z.Size = new Size ( 82, 23 );
-			TB_BM_MinCut_Z.TabIndex = 17;
+			TB_VV_Scale.Location = new Point ( 134, 6 );
+			TB_VV_Scale.Name = "TB_VV_Scale";
+			TB_VV_Scale.Size = new Size ( 82, 23 );
+			TB_VV_Scale.TabIndex = 3;
 			// 
-			// TB_BM_MinCut_Y
+			// label20
 			// 
-			TB_BM_MinCut_Y.Location = new Point ( 222, 165 );
-			TB_BM_MinCut_Y.Name = "TB_BM_MinCut_Y";
-			TB_BM_MinCut_Y.Size = new Size ( 82, 23 );
-			TB_BM_MinCut_Y.TabIndex = 16;
+			label20.AutoSize = true;
+			label20.Location = new Point ( 91, 9 );
+			label20.Name = "label20";
+			label20.Size = new Size ( 37, 15 );
+			label20.TabIndex = 2;
+			label20.Text = "Scale:";
+			label20.TextAlign = ContentAlignment.TopRight;
 			// 
-			// TB_BM_MinCut_X
+			// label21
 			// 
-			TB_BM_MinCut_X.Location = new Point ( 134, 165 );
-			TB_BM_MinCut_X.Name = "TB_BM_MinCut_X";
-			TB_BM_MinCut_X.Size = new Size ( 82, 23 );
-			TB_BM_MinCut_X.TabIndex = 15;
+			label21.AutoSize = true;
+			label21.Location = new Point ( 84, 52 );
+			label21.Name = "label21";
+			label21.Size = new Size ( 44, 15 );
+			label21.TabIndex = 4;
+			label21.Text = "Should";
+			label21.TextAlign = ContentAlignment.TopRight;
 			// 
-			// label15
+			// CB_VV_Transform
 			// 
-			label15.AutoSize = true;
-			label15.Location = new Point ( 28, 168 );
-			label15.Name = "label15";
-			label15.Size = new Size ( 100, 15 );
-			label15.TabIndex = 14;
-			label15.Text = "Minimum Cutoff:";
-			label15.TextAlign = ContentAlignment.TopRight;
-			// 
-			// label19
-			// 
-			label19.AutoSize = true;
-			label19.Location = new Point ( 28, 197 );
-			label19.Name = "label19";
-			label19.Size = new Size ( 101, 15 );
-			label19.TabIndex = 14;
-			label19.Text = "Maximum Cutoff:";
-			label19.TextAlign = ContentAlignment.TopRight;
-			// 
-			// TB_BM_MaxCut_X
-			// 
-			TB_BM_MaxCut_X.Location = new Point ( 134, 194 );
-			TB_BM_MaxCut_X.Name = "TB_BM_MaxCut_X";
-			TB_BM_MaxCut_X.Size = new Size ( 82, 23 );
-			TB_BM_MaxCut_X.TabIndex = 15;
-			// 
-			// TB_BM_MaxCut_Y
-			// 
-			TB_BM_MaxCut_Y.Location = new Point ( 222, 194 );
-			TB_BM_MaxCut_Y.Name = "TB_BM_MaxCut_Y";
-			TB_BM_MaxCut_Y.Size = new Size ( 82, 23 );
-			TB_BM_MaxCut_Y.TabIndex = 16;
-			// 
-			// TB_BM_MaxCut_Z
-			// 
-			TB_BM_MaxCut_Z.Location = new Point ( 310, 194 );
-			TB_BM_MaxCut_Z.Name = "TB_BM_MaxCut_Z";
-			TB_BM_MaxCut_Z.Size = new Size ( 82, 23 );
-			TB_BM_MaxCut_Z.TabIndex = 17;
+			CB_VV_Transform.AutoSize = true;
+			CB_VV_Transform.Location = new Point ( 134, 51 );
+			CB_VV_Transform.Name = "CB_VV_Transform";
+			CB_VV_Transform.Size = new Size ( 80, 19 );
+			CB_VV_Transform.TabIndex = 5;
+			CB_VV_Transform.Text = "Transform";
+			CB_VV_Transform.UseVisualStyleBackColor = true;
 			// 
 			// ViewerForm
 			// 
@@ -777,6 +823,8 @@
 			tabPage3.PerformLayout ();
 			GB_ProjMode.ResumeLayout ( false );
 			GB_ProjMode.PerformLayout ();
+			tabPage4.ResumeLayout ( false );
+			tabPage4.PerformLayout ();
 			ResumeLayout ( false );
 			PerformLayout ();
 		}
@@ -855,6 +903,11 @@
 		private Label label19;
 		private TextBox TB_BM_MinCut_X;
 		private Label label15;
+		private TextBox textBox2;
+		private Label label21;
+		private TextBox TB_VV_Scale;
+		private Label label20;
+		private CheckBox CB_VV_Transform;
 	}
 
 	public struct MaterialInfo {

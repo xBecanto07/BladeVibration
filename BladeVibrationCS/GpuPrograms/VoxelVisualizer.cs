@@ -3,9 +3,11 @@ using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 
 namespace BladeVibrationCS.GpuPrograms;
-internal class VoxelVisualizer : AShaderProgram {
+public class VoxelVisualizer : AShaderProgram {
 	public override (int R, int G, int B) BackgroundColor => (BACKGROUND_MIN, BACKGROUND_MID, BACKGROUND_LOW); // Teal
 	public readonly VoxelObject VoxelTexture;
+	public bool ShouldTransform = false;
+	public float Scale = 1.0f;
 
 	public VoxelVisualizer ( VoxelObject voxelTexture )
 		: base ( true, ("VoxelViewVertex.glsl", ShaderType.VertexShader)
@@ -19,19 +21,22 @@ internal class VoxelVisualizer : AShaderProgram {
 		GL.ClearColor ( BackgroundColor.R / 255f, BackgroundColor.G / 255f, BackgroundColor.B / 255f, 1.0f );
 		GL.Clear ( ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit );
 
-		Matrix4 model = Matrix4.CreateTranslation ( position ) * Matrix4.CreateFromQuaternion ( rotation );
+		Matrix4 model = Matrix4.CreateScale ( 5f, 0.2f, 0.2f ) * Matrix4.CreateTranslation ( position ) * Matrix4.CreateFromQuaternion ( rotation );
 		SetUniform ( "model", model );
 		SetUniform ( "view", view );
 		SetUniform ( "proj", projection );
+		SetUniform ( "scale", Scale );
+		SetUniform ( "renderMode", ShouldTransform ? 1 : 2 );
+
 		//SetUniform ( "voxelTexture", VoxelTexture.MaterialTextureID );
 		//SetUniform ( "TextureDims", VoxelTexture.VoxX, VoxelTexture.VoxY, VoxelTexture.VoxZ );
 		SetUniform ( "TextureMin", VoxelTexture.BasePosition.X, VoxelTexture.BasePosition.Y, VoxelTexture.BasePosition.Z );
 		SetUniform ( "TextureSize", VoxelTexture.Size.X, VoxelTexture.Size.Y, VoxelTexture.Size.Z );
 
 		GL.ActiveTexture ( TextureUnit.Texture0 );
-		//SetUniform ( "voxelTexture", 0 );
 		GL.BindTexture ( TextureTarget.Texture3D, VoxelTexture.MaterialTextureID );
-		//GL.BindImageTexture ( 1, VoxelTexture.MaterialTextureID, 0, true, 0, TextureAccess.ReadOnly, SizedInternalFormat.Rgba32f );
+		GL.ActiveTexture ( TextureUnit.Texture1 );
+		GL.BindTexture ( TextureTarget.Texture3D, VoxelTexture.ExtrasTextureID );
 
 		//Vector4[] TextureData = new Vector4[VoxelTexture.VoxX * VoxelTexture.VoxY * VoxelTexture.VoxZ];
 		//GL.BindTexture ( TextureTarget.Texture3D, VoxelTexture.MaterialTextureID );
@@ -51,6 +56,21 @@ internal class VoxelVisualizer : AShaderProgram {
 		RenderController.PlanePrimitive.Render ();
 
 		GL.BindTexture ( TextureTarget.Texture3D, 0 );
+
+		SetUniform ( "renderMode", 3 );
+		float[] X = [VoxelTexture.BasePosition.X, VoxelTexture.BasePosition.X + VoxelTexture.Size.X];
+		float[] Y = [VoxelTexture.BasePosition.Y, VoxelTexture.BasePosition.Y + VoxelTexture.Size.Y];
+		float[] Z = [VoxelTexture.BasePosition.Z, VoxelTexture.BasePosition.Z + VoxelTexture.Size.Z];
+		for ( int x = 0; x < 2; x++ )
+			for ( int y = 0; y < 2; y++ )
+				for ( int z = 0; z < 2; z++ )
+					PrintPoint ( X[x], Y[y], Z[z] );
+	}
+
+	private void PrintPoint (float x, float y, float z) {
+		Matrix4 model = Matrix4.CreateScale ( 1f ) * Matrix4.CreateTranslation ( new Vector3 ( x, y, z ) );
+		SetUniform ( "model", model );
+		RenderController.StarPrimitive.Render ();
 	}
 
 	protected override void SwitchToInner ( AShaderProgram last, Vector2i screenSize ) {

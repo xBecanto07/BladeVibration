@@ -22,6 +22,9 @@ public static class Parsers {
 			float.Parse ( y.Text ),
 			float.Parse ( z.Text )
 		);
+	public static void Parse ( this ref bool val, CheckBox box ) => val = box.Checked;
+	public static void Parse ( this ref float val, TextBox box ) => val = float.Parse ( box.Text );
+
 	public static void Parse (this MaterialHolder materials, MaterialInfo[] materialInfos) {
 		for (int i = 0; i < MaterialHolder.BUFFER_SIZE; i++) {
 			var matInfo = materialInfos[i];
@@ -60,6 +63,12 @@ public static class Parsers {
 		X.Text = vec.X.ToString ( FloatFormat );
 		Y.Text = vec.Y.ToString ( FloatFormat );
 		Z.Text = vec.Z.ToString ( FloatFormat );
+	}
+	public static void Fill ( this bool val, CheckBox box ) {
+		box.Checked = val;
+	}
+	public static void Fill ( this float val, TextBox box ) {
+		box.Text = val.ToString ( FloatFormat );
 	}
 	public static void Fill (this MaterialHolder materials, MaterialInfo[] materialInfos) {
 		for (int i = 0; i < MaterialHolder.BUFFER_SIZE; i++) {

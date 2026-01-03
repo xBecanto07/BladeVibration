@@ -8,7 +8,7 @@ using PixelForm = SixLabors.ImageSharp.PixelFormats;
 namespace BladeVibrationCS.GpuPrograms;
 public class VoxelObject : AVoxelizer {
 	MaterialHolder MaterialHolder;
-	public const int MAX_VOXELS_PER_AXIS = 2048;
+	public const int MAX_VOXELS_PER_AXIS = 4096;
 	public override (int R, int G, int B) BackgroundColor => (BACKGROUND_HIGH, BACKGROUND_LOW, BACKGROUND_MIN); // Gold
 	public float CurrentLayer = 0;
 
@@ -34,49 +34,68 @@ public class VoxelObject : AVoxelizer {
 	public void Voxelize () {
 		MaterialHolder.Use ( 0 );
 		//float maxDim = Math.Max ( Math.Max ( MaxCutoff.X - MinCutoff.X, MaxCutoff.Y - MinCutoff.Y ), MaxCutoff.Z - MinCutoff.Z );
-		CamPos = new Vector3 ( 0, MinCutoff.Y + (1 + CurrentLayer) * VoxelSize, 0 );
 		CurrentLayer += 1.0f;
-		if ( CurrentLayer > VoxY ) CurrentLayer = 0;
+		if ( CurrentLayer >= VoxY ) CurrentLayer = 0;
+		CamPos = new Vector3 ( 0, MinCutoff.Y + (1 + CurrentLayer) * VoxelSize, 0 );
 
 		Vector3 CamUp = new Vector3 ( 0, 0, -1 );
 		Matrix4 camView = Matrix4.LookAt ( CamPos, CamPos + CamDir, CamUp );
 		SetUniform ( "view", camView );
 		SetUniform ( "DefaultStiffness", 1 );
 
-		//SetUniform ( "proj", ProjectionMatrix ( 150 ) );
+		Matrix4 ortoProj = Matrix4.CreateOrthographicOffCenter (
+			MinCutoff.X, MaxCutoff.X,
+			MinCutoff.Z, MaxCutoff.Z,
+			0.5f * VoxelSize, 150f
+			);
+		SetUniform ( "proj", ortoProj );
 		//float aspectRatio = (MaxCutoff.X - MinCutoff.X) / (MaxCutoff.Z - MinCutoff.Z);
 		SetUniform ( "screenSize", LastScreenSize.X, LastScreenSize.Y );
-		SetUniform ( "model", Matrix4.Identity );
 		float maxX = MaxCutoff.X - MinCutoff.X;
 		float maxZ = MaxCutoff.Z - MinCutoff.Z;
 		SetUniform ( "boundRadius", Math.Max ( maxX, maxZ ) * 0.5f );
 		GL.BindVertexArray ( Model.VAO );
 		SetUniform ( "matOffset", 0 );
 		SetUniform ( "Y", CurrentLayer / VoxY );
-		SetUniform ( "Yi", (int)CurrentLayer );
+		//SetUniform ( "Yi", (int)CurrentLayer );
 		SetUniform ( "minBound", MinCutoff.X, MinCutoff.Y, MinCutoff.Z );
 		SetUniform ( "boundSize", MaxCutoff.X - MinCutoff.X, MaxCutoff.Y - MinCutoff.Y, MaxCutoff.Z - MinCutoff.Z );
 		SetUniform ( "voxelSize", VoxelSize );
 
-		GL.BindImageTexture ( 0, MaterialTextureID, 0, true, 0, TextureAccess.WriteOnly, SizedInternalFormat.Rgba32f );
-		GL.BindImageTexture ( 1, ExtrasTextureID, 0, true, 0, TextureAccess.WriteOnly, SizedInternalFormat.Rgba32f );
+		//GL.BindImageTexture ( 0, MaterialTextureID, 0, true, 0, TextureAccess.WriteOnly, SizedInternalFormat.Rgba32f );
+		//GL.BindImageTexture ( 1, ExtrasTextureID, 0, true, 0, TextureAccess.WriteOnly, SizedInternalFormat.Rgba32f );
+		// Using ImageTexture doesn't use stencil test (ImageStore is called in fragment shader which is before stencil test in pipeline)
+		// So we will use a framebuffer to write into 1-window, 2-MateralTexture, 3-ExtrasTexture normally with stencil test, pixel by pixel
+		GL.BindFramebuffer ( FramebufferTarget.DrawFramebuffer, FramebufferID );
+		GL.FramebufferTextureLayer ( FramebufferTarget.DrawFramebuffer, FramebufferAttachment.ColorAttachment1, MaterialTextureID, 0, (int)CurrentLayer );
+		GL.FramebufferTextureLayer ( FramebufferTarget.DrawFramebuffer, FramebufferAttachment.ColorAttachment2, ExtrasTextureID, 0, (int)CurrentLayer );
 
-		float Xstep = (MaxCutoff.X - MinCutoff.X) / PARTS;
+		var FBcomplete = GL.CheckFramebufferStatus ( FramebufferTarget.DrawFramebuffer );
+		if ( FBcomplete != FramebufferErrorCode.FramebufferComplete )
+			throw new Exception ( $"Framebuffer not complete in Voxelizer.Voxelize(): {FBcomplete}" );
+
+		Pass0_BackgroundClear ();
+		Pass1_StencilInput ();
+		Pass2_StencilTest ();
+
+		int Xstep = VoxX / PARTS;
 		for ( int x = 0; x < PARTS; x++ ) {
-		//for ( int x = 0; x < 1; x++ ) {
-			Matrix4 ortoProj = Matrix4.CreateOrthographicOffCenter (
-				MinCutoff.X + x * Xstep, MinCutoff.X + (x + 1) * Xstep,
-				MinCutoff.Z, MaxCutoff.Z,
-				//0.99f * VoxelSize, 2 * (MaxCutoff.Y - MinCutoff.Y)
-				0.5f * VoxelSize, 150f
-				);
-			SetUniform ( "proj", ortoProj );
-			Pass0_BackgroundClear ( x );
-			Pass1_StencilInput ();
-			Pass2_StencilTest ();
+			// Move part by part to window output
+			int srcXstart = x * Xstep;
+			int srcXend = (x + 1) * Xstep;
+			int tarZstart = x * (4 + VoxZ);
+			int tarZend = (x + 1) * (4 + VoxZ);
+			GL.BlitNamedFramebuffer (
+				FramebufferID, 0,
+				srcXstart, 0, srcXend, VoxZ,
+				0, tarZstart, VoxX, tarZend,
+				ClearBufferMask.ColorBufferBit,
+				BlitFramebufferFilter.Nearest );
 		}
 
 		GL.MemoryBarrier ( MemoryBarrierFlags.ShaderImageAccessBarrierBit );
+		GL.BindFramebuffer ( FramebufferTarget.DrawFramebuffer, 0 );
+		GL.BindRenderbuffer ( RenderbufferTarget.Renderbuffer, 0 );
 
 		//Vector4[] TextureData = new Vector4[VoxX * VoxY * VoxZ];
 		//GL.BindTexture ( TextureTarget.Texture3D, MaterialTextureID );

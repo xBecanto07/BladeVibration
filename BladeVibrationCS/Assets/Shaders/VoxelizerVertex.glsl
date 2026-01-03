@@ -9,7 +9,6 @@ out vec3 fragPos, fragPosNorm;
 out flat int matID;
 out float matIDf;
 
-uniform mat4 model;
 uniform mat4 view;
 uniform mat4 proj;
 uniform int matOffset;
@@ -22,7 +21,7 @@ uniform float voxelSize;
 void main() {
     matID = int(aMatID + 0.4) + matOffset;
     matIDf = aMatID + float(matOffset);
-    vec4 tmp = model * vec4(aPos * scale + offset, 1.0);
+    vec4 tmp = vec4(aPos * scale + offset, 1.0);
     gl_Position = proj * view * tmp;
     fragPosNorm = vec3((tmp.xyz - minBound) / boundSize);
     fragPosNorm.y = Y;

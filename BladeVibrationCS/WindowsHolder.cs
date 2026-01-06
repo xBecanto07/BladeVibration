@@ -75,6 +75,11 @@ public class WindowsHolder : GameWindow {
 				//GL.ClearColor ( 0.5f, 0.5f, 0f, 1.0f );
 				//GL.Clear ( ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit );
 				break;
+			case PhysicsSimulator physicsSimulator:
+				physicsSimulator.Render ( ModelOffset, scale, Camera.View, projectionMatrix, Camera.Position );
+				break;
+			default:
+				EntryProgram.StdOut ( $"Unknown program type: {program.GetType ().Name}" ); break;
 			}
 		}
 
@@ -105,7 +110,7 @@ public class WindowsHolder : GameWindow {
 		if ( input.IsKeyDown ( Keys.LeftControl ) ) speed = 0.02f;
 		if ( input.IsKeyDown ( Keys.RightControl ) ) speed = 0.01f;
 
-		ModelOffset.Move (input, Matrix4.Identity, (float)(speed * args.Time), Keys.Left, Keys.Right, Keys.Up, Keys.Down, Keys.Unknown, Keys.Unknown);
+		ModelOffset.Move (input, Matrix4.Identity, (float)(speed * args.Time), Keys.W, Keys.S, Keys.A, Keys.D, Keys.Q, Keys.E);
 		if ( input.IsKeyDown ( Keys.Space ) ) ModelOffset = Vector3.Zero;
 
 		if ( mouse.IsButtonDown ( MouseButton.Left ) )
@@ -123,7 +128,7 @@ public class WindowsHolder : GameWindow {
 		}
 		//viewMatrix = Matrix4.LookAt (Camera.Position, Camera.Position - forward, Vector3.UnitY);
 
-		VoxelSlicePosition.Move (input, Matrix4.Identity, (float)(speed * args.Time), Keys.I, Keys.K, Keys.J, Keys.L, Keys.U, Keys.O);
+		VoxelSlicePosition.Move (input, Matrix4.Identity, (float)(20 * speed * args.Time), Keys.I, Keys.K, Keys.J, Keys.L, Keys.U, Keys.O);
 
 		Vector3 sliceRot = Vector3.Zero;
 		sliceRot.Move (input, Matrix4.Identity, (float)(speed * args.Time), Keys.T, Keys.G, Keys.F, Keys.H, Keys.R, Keys.Y);

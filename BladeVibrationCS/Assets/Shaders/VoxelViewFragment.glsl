@@ -48,7 +48,15 @@ void main() {
         if (extra.w < 0.9) {
             FragColor = vec4(fragPosNorm, 1.0);
         } else {
-            if (renderMode == 1) {
+            if (renderMode == 2) {
+                float weight = log2(data.w / 1e9 + 1.0) / 10.0;
+                FragColor = vec4(
+                    fract(data.x * 0.01 * weight),
+                    fract(data.y * 0.01 * weight),
+                    fract(data.z * 0.01 * weight),
+                    1.0);
+
+            } if (renderMode == 1) {
                 FragColor = vec4(
                     //log2(data.w / 1e9 + 1.0) / 10.0,
                     extra.w,

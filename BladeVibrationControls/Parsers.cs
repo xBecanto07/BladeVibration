@@ -51,6 +51,12 @@ public static class Parsers {
 		}
 	}
 
+	public static void Parse<T> ( this ref T val, ComboBox CB ) where T : struct {
+		if ( CB.SelectedItem != null ) {
+			val = Enum.Parse<T> ( CB.SelectedItem.ToString () );
+		}
+	}
+
 	public static void Fill ( this Vector2i vec, TextBox X, TextBox Y ) {
 		X.Text = vec.X.ToString ();
 		Y.Text = vec.Y.ToString ();
@@ -69,6 +75,9 @@ public static class Parsers {
 	}
 	public static void Fill ( this float val, TextBox box ) {
 		box.Text = val.ToString ( FloatFormat );
+	}
+	public static void Fill<T> ( this T val, ComboBox CB ) where T : struct {
+		CB.SelectedItem = val.ToString ();
 	}
 	public static void Fill (this MaterialHolder materials, MaterialInfo[] materialInfos) {
 		for (int i = 0; i < MaterialHolder.BUFFER_SIZE; i++) {

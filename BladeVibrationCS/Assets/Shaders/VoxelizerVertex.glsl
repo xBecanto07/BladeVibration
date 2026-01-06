@@ -25,6 +25,5 @@ void main() {
     gl_Position = proj * view * tmp;
     fragPosNorm = vec3((tmp.xyz - minBound) / boundSize);
     fragPosNorm.y = Y;
-    fragPos = vec3(tmp);
-    fragPos.y = Y * voxelSize + minBound.y;
+    fragPos = vec3(tmp.x, Y * voxelSize + minBound.y, tmp.z);
 }

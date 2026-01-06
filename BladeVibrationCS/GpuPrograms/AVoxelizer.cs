@@ -11,7 +11,7 @@ public abstract class AVoxelizer : AShaderProgram {
 	protected readonly int WindowTmpTextureID;//, MaterialTmpTextureID, ExtrasTmpTextureID;
 	public readonly Vector3 BasePosition, Size;
 	public readonly float VoxelSize = 0.01f;
-	protected readonly ModelHolder Model;
+	public readonly ModelHolder Model;
 	public readonly int VoxX, VoxY, VoxZ;
 	protected Matrix4 view;
 	public Vector3 CamPos = Vector3.Zero;
@@ -66,7 +66,7 @@ public abstract class AVoxelizer : AShaderProgram {
 		LastProjectionOrto.Row2 = new Vector2 ( MinCutoff.Z, MaxCutoff.Z );
 	}
 
-	private int PrepareBuffer () {
+	public int PrepareBuffer () {
 		// Create and bind the buffer for 3D texture with material description
 		int ret = GL.GenTexture ();
 		GL.BindTexture ( TextureTarget.Texture3D, ret );
@@ -86,7 +86,7 @@ public abstract class AVoxelizer : AShaderProgram {
 		return ret;
 	}
 
-	private int PrepareTmpBuffer () {
+	public int PrepareTmpBuffer () {
 		// Create and bind the buffer for 3D texture with material description
 		int ret = GL.GenTexture ();
 		GL.BindTexture ( TextureTarget.Texture2D, ret );
@@ -142,7 +142,7 @@ public abstract class AVoxelizer : AShaderProgram {
 	//	ArgumentNullException.ThrowIfNull ( prepFrameBuffer );
 	//	prepFrameBuffer ();
 
-	protected const int PARTS = 3;
+	protected const int PARTS = 2;
 
 	protected void Pass0_BackgroundClear () {
 		float ratio = (MaxCutoff.Z - MinCutoff.Z) / (MaxCutoff.X - MinCutoff.X);
@@ -158,7 +158,7 @@ public abstract class AVoxelizer : AShaderProgram {
 		GL.ColorMask ( true, true, true, true );
 		GL.ClearColor ( 0.4f, 0.4f, 0f, 1f );
 		GL.Clear ( ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit );
-		RenderPlane ();
+		//RenderPlane ();
 	}
 
 	protected void Pass1_StencilInput () {
@@ -197,7 +197,7 @@ public abstract class AVoxelizer : AShaderProgram {
 		SetUniform ( "scale", 1.0f, 1.0f, 1.0f );
 		SetUniform ( "offset", 0.0f, 0.0f, 0.0f );
 		SetUniform ( "matOffset", 2 );
-		SetUniform ( "RENDER_MODE", 1 );
+		SetUniform ( "RENDER_MODE", 2 );
 		GL.Disable ( EnableCap.CullFace );
 		//GL.BindVertexArray ( Model.VAO );
 		//GL.DrawElements ( PrimitiveType.Triangles, Model.IndexCount, DrawElementsType.UnsignedInt, 0 );
@@ -205,7 +205,7 @@ public abstract class AVoxelizer : AShaderProgram {
 
 		// Draw skybox to mark empty space
 		GL.StencilFunc ( StencilFunction.Notequal, 1, 0xff );
-		SetUniform ( "RENDER_MODE", 4 );
+		SetUniform ( "RENDER_MODE", 2 );
 		SetUniform ( "matOffset", 3 );
 		RenderPlane ();
 	}

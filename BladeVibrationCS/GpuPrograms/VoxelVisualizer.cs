@@ -26,7 +26,8 @@ public class VoxelVisualizer : AShaderProgram {
 		SetUniform ( "view", view );
 		SetUniform ( "proj", projection );
 		SetUniform ( "scale", Scale );
-		SetUniform ( "renderMode", ShouldTransform ? 1 : 2 );
+		//SetUniform ( "renderMode", ShouldTransform ? 1 : 2 );
+		SetUniform ( "renderMode", 2 );
 
 		//SetUniform ( "voxelTexture", VoxelTexture.MaterialTextureID );
 		//SetUniform ( "TextureDims", VoxelTexture.VoxX, VoxelTexture.VoxY, VoxelTexture.VoxZ );

@@ -92,13 +92,22 @@
 			TB_VO_ModelBase_X = new TextBox ();
 			label5 = new Label ();
 			tabPage4 = new TabPage ();
+			CB_VV_Transform = new CheckBox ();
+			label21 = new Label ();
+			TB_VV_Scale = new TextBox ();
+			label20 = new Label ();
+			tabPage5 = new TabPage ();
+			label24 = new Label ();
+			label23 = new Label ();
+			label22 = new Label ();
+			CB_PS_InvertAxis = new ComboBox ();
+			CB_PS_SwizzleData = new ComboBox ();
+			CB_PS_SwizzleIndex = new ComboBox ();
 			BTN_Pause = new Button ();
 			BTN_Apply = new Button ();
 			LBL_StatusMsg = new Label ();
-			TB_VV_Scale = new TextBox ();
-			label20 = new Label ();
-			label21 = new Label ();
-			CB_VV_Transform = new CheckBox ();
+			TB_PS_Visualize = new TextBox ();
+			label25 = new Label ();
 			ShaderSelector.SuspendLayout ();
 			tabPage1.SuspendLayout ();
 			tabPage2.SuspendLayout ();
@@ -106,6 +115,7 @@
 			tabPage3.SuspendLayout ();
 			GB_ProjMode.SuspendLayout ();
 			tabPage4.SuspendLayout ();
+			tabPage5.SuspendLayout ();
 			SuspendLayout ();
 			// 
 			// UpdateTimer
@@ -120,6 +130,7 @@
 			ShaderSelector.Controls.Add ( tabPage2 );
 			ShaderSelector.Controls.Add ( tabPage3 );
 			ShaderSelector.Controls.Add ( tabPage4 );
+			ShaderSelector.Controls.Add ( tabPage5 );
 			ShaderSelector.Dock = DockStyle.Top;
 			ShaderSelector.Location = new Point ( 0, 0 );
 			ShaderSelector.Name = "ShaderSelector";
@@ -732,6 +743,114 @@
 			tabPage4.Text = "VoxelVievew";
 			tabPage4.UseVisualStyleBackColor = true;
 			// 
+			// CB_VV_Transform
+			// 
+			CB_VV_Transform.AutoSize = true;
+			CB_VV_Transform.Location = new Point ( 134, 51 );
+			CB_VV_Transform.Name = "CB_VV_Transform";
+			CB_VV_Transform.Size = new Size ( 80, 19 );
+			CB_VV_Transform.TabIndex = 5;
+			CB_VV_Transform.Text = "Transform";
+			CB_VV_Transform.UseVisualStyleBackColor = true;
+			// 
+			// label21
+			// 
+			label21.AutoSize = true;
+			label21.Location = new Point ( 84, 52 );
+			label21.Name = "label21";
+			label21.Size = new Size ( 44, 15 );
+			label21.TabIndex = 4;
+			label21.Text = "Should";
+			label21.TextAlign = ContentAlignment.TopRight;
+			// 
+			// TB_VV_Scale
+			// 
+			TB_VV_Scale.Location = new Point ( 134, 6 );
+			TB_VV_Scale.Name = "TB_VV_Scale";
+			TB_VV_Scale.Size = new Size ( 82, 23 );
+			TB_VV_Scale.TabIndex = 3;
+			// 
+			// label20
+			// 
+			label20.AutoSize = true;
+			label20.Location = new Point ( 91, 9 );
+			label20.Name = "label20";
+			label20.Size = new Size ( 37, 15 );
+			label20.TabIndex = 2;
+			label20.Text = "Scale:";
+			label20.TextAlign = ContentAlignment.TopRight;
+			// 
+			// tabPage5
+			// 
+			tabPage5.Controls.Add ( label25 );
+			tabPage5.Controls.Add ( TB_PS_Visualize );
+			tabPage5.Controls.Add ( label24 );
+			tabPage5.Controls.Add ( label23 );
+			tabPage5.Controls.Add ( label22 );
+			tabPage5.Controls.Add ( CB_PS_InvertAxis );
+			tabPage5.Controls.Add ( CB_PS_SwizzleData );
+			tabPage5.Controls.Add ( CB_PS_SwizzleIndex );
+			tabPage5.Location = new Point ( 4, 24 );
+			tabPage5.Name = "tabPage5";
+			tabPage5.Size = new Size ( 406, 781 );
+			tabPage5.TabIndex = 4;
+			tabPage5.Text = "Simulator";
+			tabPage5.UseVisualStyleBackColor = true;
+			// 
+			// label24
+			// 
+			label24.AutoSize = true;
+			label24.Location = new Point ( 88, 67 );
+			label24.Name = "label24";
+			label24.Size = new Size ( 40, 15 );
+			label24.TabIndex = 1;
+			label24.Text = "Invert:";
+			// 
+			// label23
+			// 
+			label23.AutoSize = true;
+			label23.Location = new Point ( 94, 38 );
+			label23.Name = "label23";
+			label23.Size = new Size ( 34, 15 );
+			label23.TabIndex = 1;
+			label23.Text = "Data:";
+			// 
+			// label22
+			// 
+			label22.AutoSize = true;
+			label22.Location = new Point ( 90, 9 );
+			label22.Name = "label22";
+			label22.Size = new Size ( 38, 15 );
+			label22.TabIndex = 1;
+			label22.Text = "Index:";
+			// 
+			// CB_PS_InvertAxis
+			// 
+			CB_PS_InvertAxis.FormattingEnabled = true;
+			CB_PS_InvertAxis.Items.AddRange ( new object[] { "None", "X", "Y", "Z", "XY", "XZ", "YZ", "XYZ" } );
+			CB_PS_InvertAxis.Location = new Point ( 134, 64 );
+			CB_PS_InvertAxis.Name = "CB_PS_InvertAxis";
+			CB_PS_InvertAxis.Size = new Size ( 121, 23 );
+			CB_PS_InvertAxis.TabIndex = 0;
+			// 
+			// CB_PS_SwizzleData
+			// 
+			CB_PS_SwizzleData.FormattingEnabled = true;
+			CB_PS_SwizzleData.Items.AddRange ( new object[] { "XYZ", "XZY", "YXZ", "YZX", "ZXY", "ZYX" } );
+			CB_PS_SwizzleData.Location = new Point ( 134, 35 );
+			CB_PS_SwizzleData.Name = "CB_PS_SwizzleData";
+			CB_PS_SwizzleData.Size = new Size ( 121, 23 );
+			CB_PS_SwizzleData.TabIndex = 0;
+			// 
+			// CB_PS_SwizzleIndex
+			// 
+			CB_PS_SwizzleIndex.FormattingEnabled = true;
+			CB_PS_SwizzleIndex.Items.AddRange ( new object[] { "XYZ", "XZY", "YXZ", "YZX", "ZXY", "ZYX" } );
+			CB_PS_SwizzleIndex.Location = new Point ( 134, 6 );
+			CB_PS_SwizzleIndex.Name = "CB_PS_SwizzleIndex";
+			CB_PS_SwizzleIndex.Size = new Size ( 121, 23 );
+			CB_PS_SwizzleIndex.TabIndex = 0;
+			// 
 			// BTN_Pause
 			// 
 			BTN_Pause.Anchor = AnchorStyles.Top | AnchorStyles.Right;
@@ -764,42 +883,21 @@
 			LBL_StatusMsg.TabIndex = 2;
 			LBL_StatusMsg.Text = "Status Message";
 			// 
-			// TB_VV_Scale
+			// TB_PS_Visualize
 			// 
-			TB_VV_Scale.Location = new Point ( 134, 6 );
-			TB_VV_Scale.Name = "TB_VV_Scale";
-			TB_VV_Scale.Size = new Size ( 82, 23 );
-			TB_VV_Scale.TabIndex = 3;
+			TB_PS_Visualize.Location = new Point ( 134, 93 );
+			TB_PS_Visualize.Name = "TB_PS_Visualize";
+			TB_PS_Visualize.Size = new Size ( 100, 23 );
+			TB_PS_Visualize.TabIndex = 2;
 			// 
-			// label20
+			// label25
 			// 
-			label20.AutoSize = true;
-			label20.Location = new Point ( 91, 9 );
-			label20.Name = "label20";
-			label20.Size = new Size ( 37, 15 );
-			label20.TabIndex = 2;
-			label20.Text = "Scale:";
-			label20.TextAlign = ContentAlignment.TopRight;
-			// 
-			// label21
-			// 
-			label21.AutoSize = true;
-			label21.Location = new Point ( 84, 52 );
-			label21.Name = "label21";
-			label21.Size = new Size ( 44, 15 );
-			label21.TabIndex = 4;
-			label21.Text = "Should";
-			label21.TextAlign = ContentAlignment.TopRight;
-			// 
-			// CB_VV_Transform
-			// 
-			CB_VV_Transform.AutoSize = true;
-			CB_VV_Transform.Location = new Point ( 134, 51 );
-			CB_VV_Transform.Name = "CB_VV_Transform";
-			CB_VV_Transform.Size = new Size ( 80, 19 );
-			CB_VV_Transform.TabIndex = 5;
-			CB_VV_Transform.Text = "Transform";
-			CB_VV_Transform.UseVisualStyleBackColor = true;
+			label25.AutoSize = true;
+			label25.Location = new Point ( 73, 96 );
+			label25.Name = "label25";
+			label25.Size = new Size ( 55, 15 );
+			label25.TabIndex = 3;
+			label25.Text = "Visualize:";
 			// 
 			// ViewerForm
 			// 
@@ -825,6 +923,8 @@
 			GB_ProjMode.PerformLayout ();
 			tabPage4.ResumeLayout ( false );
 			tabPage4.PerformLayout ();
+			tabPage5.ResumeLayout ( false );
+			tabPage5.PerformLayout ();
 			ResumeLayout ( false );
 			PerformLayout ();
 		}
@@ -908,6 +1008,15 @@
 		private TextBox TB_VV_Scale;
 		private Label label20;
 		private CheckBox CB_VV_Transform;
+		private TabPage tabPage5;
+		private ComboBox CB_PS_SwizzleIndex;
+		private Label label24;
+		private Label label23;
+		private Label label22;
+		private ComboBox CB_PS_InvertAxis;
+		private ComboBox CB_PS_SwizzleData;
+		private Label label25;
+		private TextBox TB_PS_Visualize;
 	}
 
 	public struct MaterialInfo {

@@ -4,7 +4,7 @@ using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
 
-namespace BladeVibrationCS; 
+namespace BladeVibrationCS;
 public class RenderController {
 	const float QuadSide = 0.3f;
 	const float QuadBase = -QuadSide / 2;
@@ -15,9 +15,21 @@ public class RenderController {
 	public readonly static Primitives.Cross3 Cross3DPrimitive = new ();
 	public readonly static Primitives.SkyBox SkyBoxPrimitive = new ();
 
+	private class ModelShaderBundle ( string path, Dictionary<string, float> youngModuli ) {
+		public readonly ModelHolder Model = new ( path, youngModuli );
+		private BasicMeshRenderer bmr = null;
+		public VoxelObject Voxel = null;
+		private VoxelVisualizer VoxelVisualizer = null;
+		private PhysicsSimulator PhysicsSimulator = null;
+
+		public BasicMeshRenderer GetBMR () => bmr ??= new BasicMeshRenderer ( Model );
+		public VoxelVisualizer GetVoxelVis () => VoxelVisualizer ??= new VoxelVisualizer ( Voxel );
+		public PhysicsSimulator GetPhysSim () => PhysicsSimulator ??= new PhysicsSimulator ( Voxel, GetBMR () );
+	}
+
 	readonly Controler Controler;
 	private readonly Queue<AShaderProgram> DrawRequests = new ();
-	private readonly List<(ModelHolder model, VoxelObject voxel)> Models = [];
+	private readonly List<ModelShaderBundle> Models = [];
 
 	public readonly Vector2i ScreenSize;
 
@@ -58,21 +70,20 @@ public class RenderController {
 	public void Process () {
 		while ( Controler.LoadModelRequests.Reader.TryRead ( out var loadRequest ) ) {
 			int modelId = Models.Count;
-			Models.Add ( ( new ( loadRequest.ModelPath, loadRequest.YoungModuli ), null) );
+			Models.Add ( new ( loadRequest.ModelPath, loadRequest.YoungModuli ) );
 			EntryProgram.StdOut ( "Model loaded successfully." );
 		}
 
 		while ( Controler.VoxelizeRequests.Reader.TryRead ( out var voxelizeRequest ) ) {
 			int requests = 0;
-			for (int i = 0; i < Models.Count; i++ ) {
-				if ( Models[i].voxel != null ) continue;
-				VoxelObject vo = new ( Models[i].model, (Models[i].model.MaxX - Models[i].model.MinX) / VoxelObject.MAX_VOXELS_PER_AXIS );
-				Models[i] = (Models[i].model, vo);
-				if ( vo.IsRepeatable ) {
+			foreach ( var modelInfo in Models ) {
+				if ( modelInfo.Voxel != null ) continue;
+				modelInfo.Voxel = new ( modelInfo.Model, (modelInfo.Model.MaxX - modelInfo.Model.MinX) / VoxelObject.MAX_VOXELS_PER_AXIS );
+				if ( modelInfo.Voxel.IsRepeatable ) {
 					foreach ( var shader in DrawRequests )
 						shader.IsRepeatable = false;
 				}
-				DrawRequests.Enqueue ( vo );
+				DrawRequests.Enqueue ( modelInfo.Voxel );
 				requests++;
 			}
 			EntryProgram.StdOut ( $"Voxelization request ({requests}) pushed to render queue" );
@@ -80,9 +91,9 @@ public class RenderController {
 
 		while ( Controler.SaveVoxelRequests.Reader.TryRead ( out var saveVoxelRequest ) ) {
 			int saved = 0;
-			for (int i = 0; i < Models.Count; i++ ) {
-				if ( Models[i].voxel == null ) continue;
-				Models[i].voxel.Save ( $"{saveVoxelRequest.Filename}_model{i}" );
+			for ( int i = 0; i < Models.Count; i++ ) {
+				if ( Models[i].Voxel == null ) continue;
+				Models[i].Voxel.Save ( $"{saveVoxelRequest.Filename}_model{i}" );
 				saved++;
 			}
 			EntryProgram.StdOut ( $"Saved {saved} voxel objects." );
@@ -98,20 +109,30 @@ public class RenderController {
 
 			switch ( renderMode.Mode ) {
 			case RenderModeRequest.RenderMode.Solid:
-				foreach ( (var model, var _) in Models ) {
-					DrawRequests.Enqueue ( new BasicMeshRenderer ( model ) );
+				foreach ( var modelInfo in Models ) {
+					DrawRequests.Enqueue ( modelInfo.GetBMR () );
 				}
 				EntryProgram.StdOut ( $"Switched to Solid render mode for {Models.Count} models." );
 				break;
 			case RenderModeRequest.RenderMode.Voxel:
 				int voxelCount = 0;
-				foreach ( (var _, var voxel) in Models ) {
-					if ( voxel != null ) {
-						DrawRequests.Enqueue ( new VoxelVisualizer ( voxel ) );
+				foreach ( var modelInfo in Models ) {
+					if ( modelInfo.Voxel != null ) {
+						DrawRequests.Enqueue ( modelInfo.GetVoxelVis () );
 						voxelCount++;
 					}
 				}
 				EntryProgram.StdOut ( $"Switched to Voxel render mode for {voxelCount} models. Control position using the IJKLUO keys and rotation with TFGHRY." );
+				break;
+			case RenderModeRequest.RenderMode.Sim:
+				int simCount = 0;
+				foreach ( var modelInfo in Models ) {
+					if ( modelInfo.Voxel != null ) {
+						DrawRequests.Enqueue ( modelInfo.GetPhysSim () );
+						simCount++;
+					}
+				}
+				EntryProgram.StdOut ( $"Switched to Simulation render mode for {simCount} models." );
 				break;
 			}
 		}

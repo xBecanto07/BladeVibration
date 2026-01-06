@@ -43,6 +43,8 @@ vec3 FlatNormal(vec3 pos) {
 
 void main() {
     int renderMode = (TestFrontBack > 0 && gl_FrontFacing == false) ? OBJECTS : MatProps_renderMode[matID];
+    if (TestFrontBack < 0) renderMode = -TestFrontBack;
+
     if (renderMode == SIMPLE) {
         FragColor = color;
 

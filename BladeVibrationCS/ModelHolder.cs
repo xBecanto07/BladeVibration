@@ -13,7 +13,7 @@ public class ModelHolder : IDisposable {
 
 	List<string> Errors = [];
 
-	List<Vertex> Vertices = [];
+	public List<Vertex> Vertices = [];
 	List<int> Indices = [];
 	float[] Data = null;
 	int[] DataIndices = null;

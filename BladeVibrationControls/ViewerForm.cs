@@ -68,6 +68,53 @@ public partial class ViewerForm : Form {
 			voxelView.ShouldTransform.Parse ( CB_VV_Transform );
 			voxelView.Scale.Parse ( TB_VV_Scale );
 			break;
+		case PhysicsSimulator physicsSim:
+			physicsSim.SwizzleIndex.Parse ( CB_PS_SwizzleIndex );
+			physicsSim.SwizzleData.Parse ( CB_PS_SwizzleData );
+			physicsSim.InvertAxis.Parse ( CB_PS_InvertAxis );
+			physicsSim.Visualize.Parse ( TB_PS_Visualize );
+			break;
+		}
+	}
+
+	private void UpdateBMR ( BasicMeshRenderer bmr ) {
+		TB_BM_Scale.Text = GpuWindow.scale.ToString ( "F4" );
+		GpuWindow.ModelOffset.Fill ( TB_BM_OffsetX, TB_BM_OffsetY, TB_BM_OffsetZ );
+		GpuWindow.Camera.Position.Fill ( TB_BM_CamPosX, TB_BM_CamPosY, TB_BM_CamPosZ );
+		GpuWindow.Camera.Rotation.Fill ( TB_BM_CamRotX, TB_BM_CamRotY );
+		GpuWindow.Camera.ApplyAngle ();
+
+		bmr.MaterialHolder.Fill ( MaterialEntries );
+		bmr.MinBound.Fill ( TB_BM_MinCut_X, TB_BM_MinCut_Y, TB_BM_MinCut_Z );
+		bmr.MaxBound.Fill ( TB_BM_MaxCut_X, TB_BM_MaxCut_Y, TB_BM_MaxCut_Z );
+	}
+
+	private void UpdateVO ( VoxelObject vo ) {
+		vo.BasePosition.Fill ( TB_VO_ModelBase_X, TB_VO_ModelBase_Y, TB_VO_ModelBase_Z );
+		vo.Size.Fill ( TB_VO_ModelSize_X, TB_VO_ModelSize_Y, TB_VO_ModelSize_Z );
+
+		TB_VO_DimsX.Text = vo.VoxX.ToString ();
+		TB_VO_DimsY.Text = vo.VoxY.ToString ();
+		TB_VO_DimsZ.Text = vo.VoxZ.ToString ();
+		TB_VO_VoxelSize.Text = vo.VoxelSize.ToString ( "F4" );
+
+		vo.CurrentProjMode.Select ( RB_PM_Ortho, RB_PM_Persp );
+		vo.CamPos.Fill ( TB_VO_CamPosX, TB_VO_CamPosY, TB_VO_CamPosZ );
+		vo.CamDir.Fill ( TB_VO_CamRotX, TB_VO_CamRotY, TB_VO_CamRotZ );
+
+		switch ( vo.CurrentProjMode ) {
+		case AVoxelizer.ProjectionType.Orthographic:
+			vo.LastProjectionOrto.Row0.Fill ( TB_VO_ProjX0, TB_VO_ProjX1 );
+			vo.LastProjectionOrto.Row1.Fill ( TB_VO_ProjY0, TB_VO_ProjY1 );
+			vo.LastProjectionOrto.Row2.Fill ( TB_VO_ProjZ0, TB_VO_ProjZ1 );
+			RB_PM_Ortho.Checked = true;
+			break;
+		case AVoxelizer.ProjectionType.Perspective:
+			vo.LastProjectionPersp.Row0.Fill ( TB_VO_ProjX0, TB_VO_ProjX1 );
+			vo.LastProjectionPersp.Row1.Fill ( TB_VO_ProjY0, TB_VO_ProjY1 );
+			vo.LastProjectionPersp.Row2.Fill ( TB_VO_ProjZ0, TB_VO_ProjZ1 );
+			RB_PM_Persp.Checked = true;
+			break;
 		}
 	}
 
@@ -91,49 +138,25 @@ public partial class ViewerForm : Form {
 
 		case BasicMeshRenderer basicMesh:
 			newIndex = 1;
-			TB_BM_Scale.Text = GpuWindow.scale.ToString ( "F4" );
-			GpuWindow.ModelOffset.Fill ( TB_BM_OffsetX, TB_BM_OffsetY, TB_BM_OffsetZ );
-			GpuWindow.Camera.Position.Fill ( TB_BM_CamPosX, TB_BM_CamPosY, TB_BM_CamPosZ );
-			GpuWindow.Camera.Rotation.Fill ( TB_BM_CamRotX, TB_BM_CamRotY );
-			GpuWindow.Camera.ApplyAngle ();
-
-			basicMesh.MaterialHolder.Fill ( MaterialEntries );
-			basicMesh.MinBound.Fill ( TB_BM_MinCut_X, TB_BM_MinCut_Y, TB_BM_MinCut_Z );
-			basicMesh.MaxBound.Fill ( TB_BM_MaxCut_X, TB_BM_MaxCut_Y, TB_BM_MaxCut_Z );
+			UpdateBMR ( basicMesh );
 			break;
 
 		case VoxelObject voxelizer:
 			newIndex = 2;
-			voxelizer.BasePosition.Fill ( TB_VO_ModelBase_X, TB_VO_ModelBase_Y, TB_VO_ModelBase_Z );
-			voxelizer.Size.Fill ( TB_VO_ModelSize_X, TB_VO_ModelSize_Y, TB_VO_ModelSize_Z );
-
-			TB_VO_DimsX.Text = voxelizer.VoxX.ToString ();
-			TB_VO_DimsY.Text = voxelizer.VoxY.ToString ();
-			TB_VO_DimsZ.Text = voxelizer.VoxZ.ToString ();
-			TB_VO_VoxelSize.Text = voxelizer.VoxelSize.ToString ( "F4" );
-
-			voxelizer.CurrentProjMode.Select ( RB_PM_Ortho, RB_PM_Persp );
-			voxelizer.CamPos.Fill ( TB_VO_CamPosX, TB_VO_CamPosY, TB_VO_CamPosZ );
-			voxelizer.CamDir.Fill ( TB_VO_CamRotX, TB_VO_CamRotY, TB_VO_CamRotZ );
-
-			switch ( voxelizer.CurrentProjMode ) {
-			case AVoxelizer.ProjectionType.Orthographic:
-				voxelizer.LastProjectionOrto.Row0.Fill ( TB_VO_ProjX0, TB_VO_ProjX1 );
-				voxelizer.LastProjectionOrto.Row1.Fill ( TB_VO_ProjY0, TB_VO_ProjY1 );
-				voxelizer.LastProjectionOrto.Row2.Fill ( TB_VO_ProjZ0, TB_VO_ProjZ1 );
-				RB_PM_Ortho.Checked = true;
-				break;
-			case AVoxelizer.ProjectionType.Perspective:
-				voxelizer.LastProjectionPersp.Row0.Fill ( TB_VO_ProjX0, TB_VO_ProjX1 );
-				voxelizer.LastProjectionPersp.Row1.Fill ( TB_VO_ProjY0, TB_VO_ProjY1 );
-				voxelizer.LastProjectionPersp.Row2.Fill ( TB_VO_ProjZ0, TB_VO_ProjZ1 );
-				RB_PM_Persp.Checked = true;
-				break;
-			}
+			UpdateVO ( voxelizer );
 			break;
 		case VoxelVisualizer voxelView:
+			newIndex = 3;
 			voxelView.ShouldTransform.Fill ( CB_VV_Transform );
 			voxelView.Scale.Fill ( TB_VV_Scale );
+			break;
+		case PhysicsSimulator physicsSim:
+			UpdateBMR ( physicsSim.BMR );
+			physicsSim.SwizzleIndex.Fill ( CB_PS_SwizzleIndex );
+			physicsSim.SwizzleData.Fill ( CB_PS_SwizzleData );
+			physicsSim.InvertAxis.Fill ( CB_PS_InvertAxis );
+			physicsSim.Visualize.Fill ( TB_PS_Visualize );
+			newIndex = 4;
 			break;
 		}
 

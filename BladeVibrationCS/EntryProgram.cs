@@ -216,7 +216,7 @@ public class SaveVoxelRequest {
 	public SaveVoxelRequest ( string filename ) { Filename = filename; }
 }
 public class RenderModeRequest {
-	public enum RenderMode { Wireframe, Solid, Voxel, Tension, Voxelizer, Slicer }
+	public enum RenderMode { Solid, Voxel, Sim, Tension }
 	public readonly RenderMode Mode;
 
 	public RenderModeRequest ( RenderMode mode ) { Mode = mode; }

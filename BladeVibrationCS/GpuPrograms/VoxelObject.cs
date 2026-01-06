@@ -8,7 +8,7 @@ using PixelForm = SixLabors.ImageSharp.PixelFormats;
 namespace BladeVibrationCS.GpuPrograms;
 public class VoxelObject : AVoxelizer {
 	MaterialHolder MaterialHolder;
-	public const int MAX_VOXELS_PER_AXIS = 4096;
+	public const int MAX_VOXELS_PER_AXIS = 2048;
 	public override (int R, int G, int B) BackgroundColor => (BACKGROUND_HIGH, BACKGROUND_LOW, BACKGROUND_MIN); // Gold
 	public float CurrentLayer = 0;
 

@@ -11,44 +11,17 @@ layout(location = 2) out vec4 extrasTex;
 uniform float MatProps_stiffness[MAX_MATERIALS];
 uniform float boundRadius;
 uniform float Y;
-//uniform int Yi;
 uniform int RENDER_MODE;
 uniform vec2 screenSize;
 uniform float DefaultStiffness;
 
-//#define SIMPLIFIED
-
-#if defined(SIMPLIFIED)
 void main() {
-	extrasTex = vec4(0.0);
-
-	vec3 color = vec3(0.0);
-	switch (RENDER_MODE) {
-	case 0: color = vec3(0.7); break;
-	case 1: color = vec3(1.0, 0.0, 0.0); break; // Red
-	case 2: color = vec3(0.0, 1.0, 0.0); break; // Green
-	case 3: color = vec3(0.0, 0.0, 1.0); break; // Blue
-	case 4: color = vec3(0.9, 0.9, 0.0); break; // Yellow
-	case 5: color = vec3(0.9, 0.0, 0.9); break; // Magenta
-	case 6: color = vec3(
-		MatProps_stiffness[matID] / boundRadius,
-		Y * screenSize.x / DefaultStiffness, // Use all the uniforms to avoid warnings
-		float(matID) / float(MAX_MATERIALS)
-	); break;
-	}
-	outProperties = vec4(color, 1.0);
-	voxelTex = outProperties.zyxw; // Swizzle to test because why not :)
-}
-
-#else
-
-void main() {
-	if (gl_FragCoord.x > (0.4 * screenSize.x)) {
-		outProperties = vec4(1.0, float(matID) / 8, sin(4 * fragPosNorm.x), 1.0);
-		voxelTex = outProperties;
-		extrasTex = outProperties;
-		return;
-	}
+	//if (gl_FragCoord.x > (0.4 * screenSize.x)) {
+	//	outProperties = vec4(1.0, float(matID) / 8, sin(4 * fragPosNorm.x), 1.0);
+	//	voxelTex = outProperties;
+	//	extrasTex = outProperties;
+	//	return;
+	//}
 	if (RENDER_MODE == 4) { // Simple returns during stencil-draw pass or simple test output
 		outProperties = vec4(float(matID) / 8, 1.0, sin(4 * fragPosNorm.x), 1.0);
 		voxelTex = outProperties;
@@ -100,4 +73,3 @@ void main() {
 		outProperties = vec4(stiffVis, modelID, depth, 1.0);
 	}
 }
-#endif

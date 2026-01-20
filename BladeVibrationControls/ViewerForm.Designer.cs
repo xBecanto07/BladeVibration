@@ -97,17 +97,24 @@
 			TB_VV_Scale = new TextBox ();
 			label20 = new Label ();
 			tabPage5 = new TabPage ();
+			GB_PS_VisMode = new GroupBox ();
+			RB_PS_VM_Value = new RadioButton ();
+			RB_PS_VM_Coords = new RadioButton ();
+			RB_PS_VM_World = new RadioButton ();
+			RB_PS_VM_Diff = new RadioButton ();
+			label26 = new Label ();
+			label25 = new Label ();
 			label24 = new Label ();
 			label23 = new Label ();
 			label22 = new Label ();
-			CB_PS_InvertAxis = new ComboBox ();
+			CB_PS_DisplayAxis = new ComboBox ();
+			CB_PS_InvertData = new ComboBox ();
+			CB_PS_InvertIndex = new ComboBox ();
 			CB_PS_SwizzleData = new ComboBox ();
 			CB_PS_SwizzleIndex = new ComboBox ();
 			BTN_Pause = new Button ();
 			BTN_Apply = new Button ();
 			LBL_StatusMsg = new Label ();
-			TB_PS_Visualize = new TextBox ();
-			label25 = new Label ();
 			ShaderSelector.SuspendLayout ();
 			tabPage1.SuspendLayout ();
 			tabPage2.SuspendLayout ();
@@ -116,6 +123,7 @@
 			GB_ProjMode.SuspendLayout ();
 			tabPage4.SuspendLayout ();
 			tabPage5.SuspendLayout ();
+			GB_PS_VisMode.SuspendLayout ();
 			SuspendLayout ();
 			// 
 			// UpdateTimer
@@ -782,12 +790,15 @@
 			// 
 			// tabPage5
 			// 
+			tabPage5.Controls.Add ( GB_PS_VisMode );
+			tabPage5.Controls.Add ( label26 );
 			tabPage5.Controls.Add ( label25 );
-			tabPage5.Controls.Add ( TB_PS_Visualize );
 			tabPage5.Controls.Add ( label24 );
 			tabPage5.Controls.Add ( label23 );
 			tabPage5.Controls.Add ( label22 );
-			tabPage5.Controls.Add ( CB_PS_InvertAxis );
+			tabPage5.Controls.Add ( CB_PS_DisplayAxis );
+			tabPage5.Controls.Add ( CB_PS_InvertData );
+			tabPage5.Controls.Add ( CB_PS_InvertIndex );
 			tabPage5.Controls.Add ( CB_PS_SwizzleData );
 			tabPage5.Controls.Add ( CB_PS_SwizzleIndex );
 			tabPage5.Location = new Point ( 4, 24 );
@@ -797,14 +808,89 @@
 			tabPage5.Text = "Simulator";
 			tabPage5.UseVisualStyleBackColor = true;
 			// 
+			// GB_PS_VisMode
+			// 
+			GB_PS_VisMode.Controls.Add ( RB_PS_VM_Value );
+			GB_PS_VisMode.Controls.Add ( RB_PS_VM_Coords );
+			GB_PS_VisMode.Controls.Add ( RB_PS_VM_World );
+			GB_PS_VisMode.Controls.Add ( RB_PS_VM_Diff );
+			GB_PS_VisMode.Location = new Point ( 6, 151 );
+			GB_PS_VisMode.Name = "GB_PS_VisMode";
+			GB_PS_VisMode.Size = new Size ( 400, 56 );
+			GB_PS_VisMode.TabIndex = 22;
+			GB_PS_VisMode.TabStop = false;
+			GB_PS_VisMode.Text = "Visualization Mode";
+			// 
+			// RB_PS_VM_Value
+			// 
+			RB_PS_VM_Value.AutoSize = true;
+			RB_PS_VM_Value.Location = new Point ( 188, 22 );
+			RB_PS_VM_Value.Name = "RB_PS_VM_Value";
+			RB_PS_VM_Value.Size = new Size ( 53, 19 );
+			RB_PS_VM_Value.TabIndex = 22;
+			RB_PS_VM_Value.TabStop = true;
+			RB_PS_VM_Value.Text = "Value";
+			RB_PS_VM_Value.UseVisualStyleBackColor = true;
+			// 
+			// RB_PS_VM_Coords
+			// 
+			RB_PS_VM_Coords.AutoSize = true;
+			RB_PS_VM_Coords.Location = new Point ( 119, 22 );
+			RB_PS_VM_Coords.Name = "RB_PS_VM_Coords";
+			RB_PS_VM_Coords.Size = new Size ( 63, 19 );
+			RB_PS_VM_Coords.TabIndex = 22;
+			RB_PS_VM_Coords.TabStop = true;
+			RB_PS_VM_Coords.Text = "Coords";
+			RB_PS_VM_Coords.UseVisualStyleBackColor = true;
+			// 
+			// RB_PS_VM_World
+			// 
+			RB_PS_VM_World.AutoSize = true;
+			RB_PS_VM_World.Location = new Point ( 56, 22 );
+			RB_PS_VM_World.Name = "RB_PS_VM_World";
+			RB_PS_VM_World.Size = new Size ( 57, 19 );
+			RB_PS_VM_World.TabIndex = 22;
+			RB_PS_VM_World.TabStop = true;
+			RB_PS_VM_World.Text = "World";
+			RB_PS_VM_World.UseVisualStyleBackColor = true;
+			// 
+			// RB_PS_VM_Diff
+			// 
+			RB_PS_VM_Diff.AutoSize = true;
+			RB_PS_VM_Diff.Location = new Point ( 6, 22 );
+			RB_PS_VM_Diff.Name = "RB_PS_VM_Diff";
+			RB_PS_VM_Diff.Size = new Size ( 44, 19 );
+			RB_PS_VM_Diff.TabIndex = 22;
+			RB_PS_VM_Diff.TabStop = true;
+			RB_PS_VM_Diff.Text = "Diff";
+			RB_PS_VM_Diff.UseVisualStyleBackColor = true;
+			// 
+			// label26
+			// 
+			label26.AutoSize = true;
+			label26.Location = new Point ( 58, 125 );
+			label26.Name = "label26";
+			label26.Size = new Size ( 70, 15 );
+			label26.TabIndex = 1;
+			label26.Text = "Display axis:";
+			// 
+			// label25
+			// 
+			label25.AutoSize = true;
+			label25.Location = new Point ( 57, 96 );
+			label25.Name = "label25";
+			label25.Size = new Size ( 71, 15 );
+			label25.TabIndex = 1;
+			label25.Text = "Invert index:";
+			// 
 			// label24
 			// 
 			label24.AutoSize = true;
-			label24.Location = new Point ( 88, 67 );
+			label24.Location = new Point ( 57, 67 );
 			label24.Name = "label24";
-			label24.Size = new Size ( 40, 15 );
+			label24.Size = new Size ( 71, 15 );
 			label24.TabIndex = 1;
-			label24.Text = "Invert:";
+			label24.Text = "Invert index:";
 			// 
 			// label23
 			// 
@@ -824,14 +910,32 @@
 			label22.TabIndex = 1;
 			label22.Text = "Index:";
 			// 
-			// CB_PS_InvertAxis
+			// CB_PS_DisplayAxis
 			// 
-			CB_PS_InvertAxis.FormattingEnabled = true;
-			CB_PS_InvertAxis.Items.AddRange ( new object[] { "None", "X", "Y", "Z", "XY", "XZ", "YZ", "XYZ" } );
-			CB_PS_InvertAxis.Location = new Point ( 134, 64 );
-			CB_PS_InvertAxis.Name = "CB_PS_InvertAxis";
-			CB_PS_InvertAxis.Size = new Size ( 121, 23 );
-			CB_PS_InvertAxis.TabIndex = 0;
+			CB_PS_DisplayAxis.FormattingEnabled = true;
+			CB_PS_DisplayAxis.Items.AddRange ( new object[] { "None", "X", "Y", "Z", "XY", "XZ", "YZ", "XYZ" } );
+			CB_PS_DisplayAxis.Location = new Point ( 134, 122 );
+			CB_PS_DisplayAxis.Name = "CB_PS_DisplayAxis";
+			CB_PS_DisplayAxis.Size = new Size ( 121, 23 );
+			CB_PS_DisplayAxis.TabIndex = 0;
+			// 
+			// CB_PS_InvertData
+			// 
+			CB_PS_InvertData.FormattingEnabled = true;
+			CB_PS_InvertData.Items.AddRange ( new object[] { "None", "X", "Y", "Z", "XY", "XZ", "YZ", "XYZ" } );
+			CB_PS_InvertData.Location = new Point ( 134, 93 );
+			CB_PS_InvertData.Name = "CB_PS_InvertData";
+			CB_PS_InvertData.Size = new Size ( 121, 23 );
+			CB_PS_InvertData.TabIndex = 0;
+			// 
+			// CB_PS_InvertIndex
+			// 
+			CB_PS_InvertIndex.FormattingEnabled = true;
+			CB_PS_InvertIndex.Items.AddRange ( new object[] { "None", "X", "Y", "Z", "XY", "XZ", "YZ", "XYZ" } );
+			CB_PS_InvertIndex.Location = new Point ( 134, 64 );
+			CB_PS_InvertIndex.Name = "CB_PS_InvertIndex";
+			CB_PS_InvertIndex.Size = new Size ( 121, 23 );
+			CB_PS_InvertIndex.TabIndex = 0;
 			// 
 			// CB_PS_SwizzleData
 			// 
@@ -883,22 +987,6 @@
 			LBL_StatusMsg.TabIndex = 2;
 			LBL_StatusMsg.Text = "Status Message";
 			// 
-			// TB_PS_Visualize
-			// 
-			TB_PS_Visualize.Location = new Point ( 134, 93 );
-			TB_PS_Visualize.Name = "TB_PS_Visualize";
-			TB_PS_Visualize.Size = new Size ( 100, 23 );
-			TB_PS_Visualize.TabIndex = 2;
-			// 
-			// label25
-			// 
-			label25.AutoSize = true;
-			label25.Location = new Point ( 73, 96 );
-			label25.Name = "label25";
-			label25.Size = new Size ( 55, 15 );
-			label25.TabIndex = 3;
-			label25.Text = "Visualize:";
-			// 
 			// ViewerForm
 			// 
 			AutoScaleDimensions = new SizeF ( 7F, 15F );
@@ -925,6 +1013,8 @@
 			tabPage4.PerformLayout ();
 			tabPage5.ResumeLayout ( false );
 			tabPage5.PerformLayout ();
+			GB_PS_VisMode.ResumeLayout ( false );
+			GB_PS_VisMode.PerformLayout ();
 			ResumeLayout ( false );
 			PerformLayout ();
 		}
@@ -1013,10 +1103,17 @@
 		private Label label24;
 		private Label label23;
 		private Label label22;
-		private ComboBox CB_PS_InvertAxis;
+		private ComboBox CB_PS_InvertIndex;
 		private ComboBox CB_PS_SwizzleData;
 		private Label label25;
-		private TextBox TB_PS_Visualize;
+		private ComboBox CB_PS_InvertData;
+		private Label label26;
+		private ComboBox CB_PS_DisplayAxis;
+		private GroupBox GB_PS_VisMode;
+		private RadioButton RB_PS_VM_Value;
+		private RadioButton RB_PS_VM_Coords;
+		private RadioButton RB_PS_VM_World;
+		private RadioButton RB_PS_VM_Diff;
 	}
 
 	public struct MaterialInfo {

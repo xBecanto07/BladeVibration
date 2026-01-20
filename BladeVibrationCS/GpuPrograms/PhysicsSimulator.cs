@@ -12,14 +12,18 @@ public class PhysicsSimulator : AShaderProgram {
 
 	public enum SwizzleMode { XYZ = 0, XZY = 1, YXZ = 2, YZX = 3, ZXY = 4, ZYX = 5 }
 	public enum AxisSelect { None = 0, X = 1, Y = 2, Z = 3, XY = 4, XZ = 5, YZ = 6, XYZ = 7 }
+	public enum VisualizeMode { Diff = 0, World = 1, Coords = 2, Value = 3 }
 	public SwizzleMode SwizzleIndex = SwizzleMode.XYZ;
 	public SwizzleMode SwizzleData = SwizzleMode.XYZ;
-	public AxisSelect InvertAxis = AxisSelect.None;
-	public float Visualize = 1.0f;
+	public AxisSelect InvertIndex = AxisSelect.None;
+	public AxisSelect InvertData = AxisSelect.None;
+	public AxisSelect DisplayAxis = AxisSelect.XYZ;
+	//public float Visualize = 1.0f;
+	public VisualizeMode Visualize = VisualizeMode.Diff;
 
 	public PhysicsSimulator ( VoxelObject voxelTexture, BasicMeshRenderer bmr )
 		: base ( true, ("PhysicsVertex.glsl", ShaderType.VertexShader)
-			, ("Fragment.glsl", ShaderType.FragmentShader) ) {
+			, ("PhysicsFragment.glsl", ShaderType.FragmentShader) ) {
 		ArgumentNullException.ThrowIfNull ( voxelTexture );
 		ComputeShader = new ( voxelTexture );
 		BMR = bmr;
@@ -193,28 +197,15 @@ public class PhysicsSimulator : AShaderProgram {
 		SetUniform ( "TextureMin", VO.BasePosition.X, VO.BasePosition.Y, VO.BasePosition.Z );
 		SetUniform ( "TextureSize", VO.Size.X, VO.Size.Y, VO.Size.Z );
 
-		SetUniform ( "lightPosMain", 200f, -5000f, 200f );
-		SetUniform ( "lightPosSecond", -2500f, -900f, 150f );
-		SetUniform ( "camPos", camPos.X, camPos.Y, camPos.Z );
-		SetUniform ( "specularColor", 0.8f, 1f, 0.8f );
-		SetUniform ( "TestFrontBack", -BasicMeshRenderer.RENDER_MODE_SIMPLE );
-		SetUniform ( "colorA", 1f, 0f, 0f );
-		SetUniform ( "colorB", 0f, 0f, 1f );
 		SetUniform ( "offset", modelOffset.X, modelOffset.Y, modelOffset.Z );
 		SetUniform ( "scale", scale, scale, scale );
-		//SetUniform ( "matOffset", 6 );
-		SetUniform ( "MinCutoff", BMR.MinBound.X, BMR.MinBound.Y, BMR.MinBound.Z );
-		SetUniform ( "MaxCutoff", BMR.MaxBound.X, BMR.MaxBound.Y, BMR.MaxBound.Z );
 		SetUniform ( "SwizzleIndex", (int)SwizzleIndex );
 		SetUniform ( "SwizzleData", (int)SwizzleData );
-		SetUniform ( "InvertAxis", (int)InvertAxis );
+		SetUniform ( "InvertIndex", (int)InvertIndex );
+		SetUniform ( "InvertData", (int)InvertData );
+		SetUniform ( "DisplayAxis", (int)DisplayAxis );
+		SetUniform ( "Visualize", (int)Visualize );
 
-		SetUniform ( "Visualize", 1 );
-		GL.BindVertexArray ( VO.Model.VAO );
-		GL.DrawElements ( PrimitiveType.Triangles, VO.Model.IndexCount, DrawElementsType.UnsignedInt, 0 );
-
-		SetUniform ( "Visualize", -1 );
-		SetUniform ( "offset", modelOffset.X, modelOffset.Y - 0.5f, modelOffset.Z );
 		GL.BindVertexArray ( VO.Model.VAO );
 		GL.DrawElements ( PrimitiveType.Triangles, VO.Model.IndexCount, DrawElementsType.UnsignedInt, 0 );
 	}

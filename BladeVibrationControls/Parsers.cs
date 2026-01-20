@@ -79,6 +79,11 @@ public static class Parsers {
 	public static void Fill<T> ( this T val, ComboBox CB ) where T : struct {
 		CB.SelectedItem = val.ToString ();
 	}
+	public static void Fill<T> ( this T val, params RadioButton[] buttons ) where T : struct {
+		foreach ( var btn in buttons ) {
+			btn.Checked = btn.Text == val.ToString ();
+		}
+	}
 	public static void Fill (this MaterialHolder materials, MaterialInfo[] materialInfos) {
 		for (int i = 0; i < MaterialHolder.BUFFER_SIZE; i++) {
 			var (shininess, diffuseStrength, stiffness, renderMode) = materials[i];

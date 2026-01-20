@@ -71,8 +71,10 @@ public partial class ViewerForm : Form {
 		case PhysicsSimulator physicsSim:
 			physicsSim.SwizzleIndex.Parse ( CB_PS_SwizzleIndex );
 			physicsSim.SwizzleData.Parse ( CB_PS_SwizzleData );
-			physicsSim.InvertAxis.Parse ( CB_PS_InvertAxis );
-			physicsSim.Visualize.Parse ( TB_PS_Visualize );
+			physicsSim.InvertIndex.Parse ( CB_PS_InvertIndex );
+			physicsSim.InvertData.Parse ( CB_PS_InvertData );
+			physicsSim.DisplayAxis.Parse ( CB_PS_DisplayAxis );
+			physicsSim.Visualize.Select ( RB_PS_VM_Diff, RB_PS_VM_World, RB_PS_VM_Coords, RB_PS_VM_Value );
 			break;
 		}
 	}
@@ -154,8 +156,10 @@ public partial class ViewerForm : Form {
 			UpdateBMR ( physicsSim.BMR );
 			physicsSim.SwizzleIndex.Fill ( CB_PS_SwizzleIndex );
 			physicsSim.SwizzleData.Fill ( CB_PS_SwizzleData );
-			physicsSim.InvertAxis.Fill ( CB_PS_InvertAxis );
-			physicsSim.Visualize.Fill ( TB_PS_Visualize );
+			physicsSim.InvertIndex.Fill ( CB_PS_InvertIndex );
+			physicsSim.InvertData.Fill ( CB_PS_InvertData );
+			physicsSim.DisplayAxis.Fill ( CB_PS_DisplayAxis );
+			physicsSim.Visualize.Fill ( RB_PS_VM_Diff, RB_PS_VM_World, RB_PS_VM_Coords, RB_PS_VM_Value );
 			newIndex = 4;
 			break;
 		}

@@ -58,8 +58,8 @@ void main() {
 
             } if (renderMode == 1) {
                 FragColor = vec4(
-                    //log2(data.w / 1e9 + 1.0) / 10.0,
-                    extra.w,
+                    log2(data.w / 1e9 + 1.0) / 10.0,
+                    //extra.w,
                     (extra.x / 255.0) * 10.0, // Model ID * 10 for visibility
                     data.y, // Y-depth
                     1.0);

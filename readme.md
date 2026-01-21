@@ -24,7 +24,7 @@ Available modes are:
 - **Solid**: Render loaded model mesh, color representing position in world space. Includes skybox and point matrix (-3|3)³ points every 0.3. This mode is mostly for debugging to show everything is loaded and can be displayed correctly.
 - **Voxel**: Show slice through the voxelized representation in space. Slicing plane can be moved by IKJLUO (very slow) and rotated by TGFHRY.
 - **Sim**: Displays difference between voxel 'physical' representation and the fragment position in world space. Each axis difference is visualized as a following function of the offset:
-    ![Offset function](DiffFcn.png "Offset function")
+    ![Offset function](./DiffFcn.png "Offset function")
     This is used to visually separate positive/negative values and cleary display both small and large values on (0;1) color range.
 
 ### Conrol window
